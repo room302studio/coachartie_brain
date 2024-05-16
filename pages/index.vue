@@ -12,13 +12,23 @@
       </div>
     </div>
 
-    <div v-if="activeView === 'prompts'">
+    <h2>Prompts</h2>
+    <div v-if="activeView === 'prompts'" class="columns columns-2 gap-4">
 
-      Prompts
+
       <div v-for="value in promptsData" :key="key" class="mb-4 max-w-prose mx-auto">
         <span class="text-sm font-medium text-gray-700 mr-4">{{ value.prompt_name }}</span>
         <span>{{ value.prompt_text }}</span>
       </div>
+    </div>
+
+    <div class="fixed top-4 right-4 w-48 z-10">
+
+      <TodoViewer />
+    </div>
+
+    <div class="w-full bg-slate-200 p-4 rounded-lg">
+      <LogViewer />
     </div>
 
 
@@ -43,9 +53,7 @@
           </div>
         </div> -->
 
-        <div class="w-full bg-slate-200 p-4 rounded-lg">
-          <LogViewer />
-        </div>
+
 
 
 
@@ -103,7 +111,7 @@
           </div>
 
           <div class="metadata @md:w-1/5 flex flex-col">
-            <div class="flex flex-col justify-between gap-1 p-1 w-full">
+            <div class="flex flex-col justify-between gap-1 p-1 w-full leading-none">
               <div class="w-full flex items-center">
                 <UIcon name="i-heroicons-user" class="w-3 h-3" />
                 <span class="ml-2 text-sm">{{ memory.user_id }}</span>

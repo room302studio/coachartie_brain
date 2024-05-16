@@ -35,7 +35,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/']
+      exclude: ['/', '/memories']
     }
   },
   runtimeConfig: {
