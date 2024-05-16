@@ -2,6 +2,14 @@
   <section>
     <SiteNav @updateView="activeView = $event" />
 
+    <div class="max-w-prose mx-auto">
+      <LatestLog />
+    </div>
+
+    <div v-if="activeView === 'capabilities'">
+      <CapabilityManifestView />
+    </div>
+
     <div v-if="activeView === 'config'">
       <ConfigView />
     </div>
@@ -10,31 +18,30 @@
       <PromptsView />
     </div>
 
-    <div class="fixed top-4 right-4 w-48 z-10">
-      <TodoViewer />
-    </div>
-
-    <div class="w-full bg-slate-200 dark:bg-slate-900 p-4 rounded-lg">
-      <LogViewer />
-    </div>
-
     <Splitpanes
-      class="h-full p-2 md:p-4 lg:p-8"
+      class="h-screen px-2 md:px-4 lg:px-8"
       v-if="activeView === 'memories'"
+      :push-other-panes="false"
     >
-      <Pane
-        class="@container h-full overflow-y-auto px-1"
-        size="50"
-        min-size="20"
-      >
-        <MessagesView />
+      <Pane size="50" min-size="20">
+        <VerboseLogViewer />
       </Pane>
-      <Pane
-        class="@container h-full overflow-y-auto px-1"
-        size="50"
-        min-size="20"
-      >
-        <MemoriesView />
+      <Pane size="30" min-size="20">
+        <Splitpanes
+          horizontal
+          :push-other-panes="false"
+          class="@container overflow-y-auto px-1 max-h-screen"
+        >
+          <Pane size="50">
+            <MessagesView />
+          </Pane>
+          <Pane size="50">
+            <MemoriesView />
+          </Pane>
+        </Splitpanes>
+      </Pane>
+      <Pane size="10" min-size="2" class="overflow-y-auto max-h-screen">
+        <TodoViewer />
       </Pane>
     </Splitpanes>
   </section>
@@ -51,32 +58,7 @@ import 'vue-json-pretty/lib/styles.css'
 import { animate, svg, stagger } from '~/anime.esm.js'
 import { ref, reactive, watch } from 'vue'
 
-// the app is gonna have at least 2 views:
-// 1. the main view that shows the memories + messages
-// 2. the config view that shows the config for prompts and config table
-
 const activeView = ref('memories')
-const views = [
-  {
-    label: 'Memories',
-    key: 'memories',
-    icon: 'i-heroicons-user',
-    click: () => (activeView.value = 'memories')
-  },
-  {
-    label: 'Config',
-    key: 'config',
-    icon: 'i-heroicons-cog-6-tooth-solid',
-    click: () => (activeView.value = 'config')
-  },
-  {
-    label: 'Prompts',
-    key: 'prompts',
-    icon: 'i-heroicons-chat-bubble-bottom-center-20-solid',
-    click: () => (activeView.value = 'prompts')
-  }
-]
-
 const memories = ref([]) // use ref to store the memories
 
 // config

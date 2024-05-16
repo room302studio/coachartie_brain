@@ -1,8 +1,11 @@
 <template>
-  <div class="overflow-y-auto text-sm max-h-96 bg-gray-100 p-4 rounded-lg">
-    <div v-for="todo in todos" :key="todo.id" class="">
-      <span class="block leading-none text-[10px]" v-html="todo.name" />
-      <span class="block leading-none text-[10px] text-gray-500" v-html="todo.description" />
+  <div class="text-sm p-4 rounded-lg">
+    <div v-for="todo in todos" :key="todo.id" class="mb-2">
+      <span class="block leading-none" v-html="todo.name" />
+      <span
+        class="block leading-none text-gray-500"
+        v-html="todo.description"
+      />
     </div>
   </div>
 </template>
@@ -21,9 +24,6 @@ if (todosData) {
   todos.value = todosData
 }
 
-
-
-
 supabase
   .channel('messagechannel')
   .on(
@@ -37,9 +37,6 @@ supabase
     }
   )
   .subscribe()
-
-
-
 </script>
 
 <style scoped></style>

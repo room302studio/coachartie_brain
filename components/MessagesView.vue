@@ -22,11 +22,7 @@
       </div>
       <transition name="fade">
         <div v-if="!collapsedUsers[user]" class="messages">
-          <div
-            v-for="message in userMessages"
-            :key="message.id"
-            class="border-b border-gray-500/50 py-1"
-          >
+          <div v-for="message in userMessages" :key="message.id" class="py-0.5">
             <div class="flex flex-col h-full">
               <div class="@md:flex items-start justify-between">
                 <div class="@md:w-1/5 ml-3 p-1 rounded text-sm">
@@ -42,7 +38,11 @@
                   </div>
                 </div>
                 <div class="w-4/5 ml-3">
-                  <div class="text-xs">{{ message.value }}</div>
+                  <div
+                    class="text-xs bg-blue-500 text-white rounded-lg p-2 px-4 inline"
+                  >
+                    {{ message.value }}
+                  </div>
                 </div>
               </div>
             </div>

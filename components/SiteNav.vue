@@ -23,6 +23,12 @@ const views = [
     key: 'prompts',
     icon: 'i-heroicons-chat-bubble-bottom-center-20-solid',
     click: () => emit('updateView', 'prompts')
+  },
+  {
+    label: 'Capabilities',
+    key: 'capabilities',
+    icon: 'i-fluent-cube-32-filled',
+    click: () => emit('updateView', 'capabilities')
   }
 ]
 </script>
