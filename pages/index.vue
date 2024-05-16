@@ -1,134 +1,40 @@
 <template>
   <section>
-    <UHorizontalNavigation :links="views" />
-    <!-- <h1>Coach Artie Memories</h1> -->
+    <SiteNav @updateView="activeView = $event" />
 
     <div v-if="activeView === 'config'">
-      <div id="brain-config">
-        <div v-for="value in configData" :key="key" class="mb-4">
-          <span class="text-sm font-medium text-gray-700 mr-4">{{ value.config_key }}</span>
-          <span>{{ value.config_value }}</span>
-        </div>
-      </div>
+      <ConfigView />
     </div>
 
-    <h2>Prompts</h2>
-    <div v-if="activeView === 'prompts'" class="columns columns-2 gap-4">
-
-
-      <div v-for="value in promptsData" :key="key" class="mb-4 max-w-prose mx-auto">
-        <span class="text-sm font-medium text-gray-700 mr-4">{{ value.prompt_name }}</span>
-        <span>{{ value.prompt_text }}</span>
-      </div>
+    <div v-if="activeView === 'prompts'">
+      <PromptsView />
     </div>
 
     <div class="fixed top-4 right-4 w-48 z-10">
-
       <TodoViewer />
     </div>
 
-    <div class="w-full bg-slate-200 p-4 rounded-lg">
+    <div class="w-full bg-slate-200 dark:bg-slate-900 p-4 rounded-lg">
       <LogViewer />
     </div>
 
-
-    <Splitpanes class="h-full p-2 md:p-4 lg:p-8" v-if="activeView === 'memories'">
-      <Pane class="@container h-full overflow-y-auto px-1" size="50" min-size="20">
-        <!-- <div>
-          <h2 class="text-2xl font-bold mb-4">Recent Users</h2>
-          <div
-            v-for="[user, userMessages] in groupedMessages"
-            :key="user"
-            class="flex items-center mb-4"
-          >
-            <UIcon name="i-heroicons-user" class="w-3 h-3 mr-2" />
-
-            <UChip
-              :text="countUserMessages(user)"
-              size="2xl"
-              class="flex items-center"
-            > 
-              <span class="ml-2">{{ user }}</span>
-            </UChip>
-          </div>
-        </div> -->
-
-
-
-
-
-        <h2 class="text-2xl font-bold mb-4">Messages</h2>
-        <div v-for="[user, userMessages] in groupedMessages" :key="user" class="user-messages">
-          <div @click="toggleCollapse(user)" class="cursor-pointer flex items-center justify-between">
-            <h3 class="text-2xl font-bold mb-4">{{ user }}</h3>
-            <UIcon :name="collapsedUsers[user]
-      ? 'i-heroicons-chevron-down'
-      : 'i-heroicons-chevron-up'
-      " class="w-5 h-5" />
-          </div>
-          <transition name="fade">
-            <div v-if="!collapsedUsers[user]" class="messages">
-              <div v-for="message in userMessages" :key="message.id" class="border-b border-gray-500/50 py-1">
-                <div class="flex flex-col h-full">
-                  <div class="@md:flex items-start justify-between">
-                    <!-- Changed from "items-center" to "items-start" -->
-                    <!-- date / created_at -->
-                    <div class="@md:w-1/5 ml-3 p-1 rounded text-sm">
-                      <div class="w-full">
-                        <UIcon name="i-heroicons-user" class="w-3 h-3" />
-                        {{ message.user_id }}
-                      </div>
-                      <div class="text-sm font-medium text-gray-700">
-                        <!-- {{ message.created_at }} -->
-                        <!-- {{ format(new Date(message.created_at), 'MMM d, yyyy') }} -->
-                        <!-- more concise -->
-                        <span class="font-light bg-gray-900 rounded px-1">{{
-      format(new Date(message.created_at), 'M/d')
-    }}</span>
-                        {{ format(new Date(message.created_at), ' hh:mm:ss') }}
-                      </div>
-                    </div>
-
-                    <!-- value -->
-                    <div class="w-4/5 ml-3">
-                      <div class="text-xs">
-                        {{ message.value }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </transition>
-        </div>
+    <Splitpanes
+      class="h-full p-2 md:p-4 lg:p-8"
+      v-if="activeView === 'memories'"
+    >
+      <Pane
+        class="@container h-full overflow-y-auto px-1"
+        size="50"
+        min-size="20"
+      >
+        <MessagesView />
       </Pane>
-      <Pane class="@container h-full overflow-y-auto px-1" size="50" min-size="20">
-        <h2 class="text-2xl font-bold mb-4">Memories</h2>
-        <div v-for="memory in memories" :key="memory.id" class="@md:flex mb-2">
-
-          <div v-if="memory.related_message_id" class="bg-red-500 rounded-lg p-1 text-xs">
-            {{ memory.related_message_id }}
-          </div>
-
-          <div class="metadata @md:w-1/5 flex flex-col">
-            <div class="flex flex-col justify-between gap-1 p-1 w-full leading-none">
-              <div class="w-full flex items-center">
-                <UIcon name="i-heroicons-user" class="w-3 h-3" />
-                <span class="ml-2 text-sm">{{ memory.user_id }}</span>
-              </div>
-              <div class="w-full">
-                <span class="text-sm font-medium text-gray-700">
-                  <span class="font-light bg-gray-900 rounded px-1">{{
-      format(new Date(memory.created_at), 'M/d')
-    }}</span>
-                  {{ format(new Date(memory.created_at), ' hh:mm:ss') }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <pre class="@md:w-4/5 text-xs leading-normal p-1">{{ memory.value }}</pre>
-        </div>
+      <Pane
+        class="@container h-full overflow-y-auto px-1"
+        size="50"
+        min-size="20"
+      >
+        <MemoriesView />
       </Pane>
     </Splitpanes>
   </section>
@@ -145,36 +51,31 @@ import 'vue-json-pretty/lib/styles.css'
 import { animate, svg, stagger } from '~/anime.esm.js'
 import { ref, reactive, watch } from 'vue'
 
-
-
-
 // the app is gonna have at least 2 views:
 // 1. the main view that shows the memories + messages
 // 2. the config view that shows the config for prompts and config table
 
 const activeView = ref('memories')
-const views = [{
-  label: 'Memories',
-  key: 'memories',
-  icon: 'i-heroicons-user',
-  click: () => activeView.value = 'memories'
-}, {
-  label: 'Config',
-  key: 'config',
-  icon: 'i-heroicons-cog-6-tooth-solid',
-  click: () => activeView.value = 'config'
-},
-{
-  label: 'Prompts',
-  key: 'prompts',
-  icon: 'i-heroicons-chat-bubble-bottom-center-20-solid',
-  click: () => activeView.value = 'prompts'
-}
+const views = [
+  {
+    label: 'Memories',
+    key: 'memories',
+    icon: 'i-heroicons-user',
+    click: () => (activeView.value = 'memories')
+  },
+  {
+    label: 'Config',
+    key: 'config',
+    icon: 'i-heroicons-cog-6-tooth-solid',
+    click: () => (activeView.value = 'config')
+  },
+  {
+    label: 'Prompts',
+    key: 'prompts',
+    icon: 'i-heroicons-chat-bubble-bottom-center-20-solid',
+    click: () => (activeView.value = 'prompts')
+  }
 ]
-
-
-
-
 
 const memories = ref([]) // use ref to store the memories
 
@@ -260,8 +161,6 @@ function countUserMessages(username) {
   return count
 }
 
-
-
 // get the config from the database
 const { data: configData, error: configError } = await supabase
   .from('config')
@@ -270,7 +169,6 @@ const { data: configData, error: configError } = await supabase
 const { data: promptsData, error: promptsError } = await supabase
   .from('prompts')
   .select('*')
-
 
 // make a function to modify a config value
 async function modifyConfig(key, value) {
@@ -300,7 +198,8 @@ function toggleCollapse(user) {
 </script>
 
 <style>
-.splitpanes {}
+.splitpanes {
+}
 
 .splitpanes__splitter {
   background-color: rgba(255, 255, 255, 0.2);
@@ -322,13 +221,13 @@ function toggleCollapse(user) {
   opacity: 1;
 }
 
-.splitpanes--vertical>.splitpanes__splitter:before {
+.splitpanes--vertical > .splitpanes__splitter:before {
   left: -12px;
   right: -12px;
   height: 100%;
 }
 
-.splitpanes--horizontal>.splitpanes__splitter:before {
+.splitpanes--horizontal > .splitpanes__splitter:before {
   top: -12px;
   bottom: -12px;
   width: 100%;

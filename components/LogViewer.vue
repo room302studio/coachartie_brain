@@ -1,14 +1,12 @@
 <template>
   <div>
-    <h2 class="text-xl mb-4 line-clamp-3 p-8" v-html="mostRecentMessage">
+    <h2 class="text-xl mb-4 line-clamp-3 px-8" v-html="mostRecentMessage">
     </h2>
 
-    <!-- make a multi-select to determine which services to show -->
-    <USelectMenu v-model="selectedServices" :options="uniqueServices" multiple />
+
 
     <transition-group name="log-slide" tag="div" class="logs-container">
-      <div v-for="log in clampedFilteredLogs" :key="`${log.service}-${log.timestamp}`"
-        class="w-full overflow-hidden break-words">
+      <div v-for="log in clampedFilteredLogs" :key="`${log.id}`" class="w-full overflow-hidden break-words">
         <UBadge class="inline" v-if="log.level === 'ERROR'" color="red">Error</UBadge>
         <UBadge class="inline" v-else-if="log.level === 'WARNING'" color="yellow">Warning</UBadge>
         <UBadge class="inline" v-else color="gray">Info</UBadge>
@@ -17,6 +15,12 @@
         <span class="inline-block leading-none text-xs" v-html="log.message" />
       </div>
     </transition-group>
+
+    <!-- make a multi-select to determine which services to show -->
+    <div class="mt-1">
+      <span class="text-sm font-medium">Show logs for:</span>
+      <USelectMenu v-model="selectedServices" :options="uniqueServices" multiple />
+    </div>
   </div>
 </template>
 
@@ -24,8 +28,8 @@
 const supabase = useSupabaseClient()
 const logs = ref([])
 
-const logClamp = 5
-const clampedLogs = computed(() => logs.value.slice(0, logClamp))
+const logClamp = ref(12)
+const clampedLogs = computed(() => logs.value.slice(0, logClamp.value))
 
 const defaultLogsToShow = 25
 
@@ -52,7 +56,7 @@ const selectedServices = useLocalStorage('selected-services', uniqueServices.val
 
 // filter only to the services we have selected to show
 const clampedFilteredLogs = computed(() => {
-  return logs.value.filter((log) => selectedServices.value.includes(log.service)).slice(0, logClamp)
+  return logs.value.filter((log) => selectedServices.value.includes(log.service)).slice(0, logClamp.value)
 })
 
 
