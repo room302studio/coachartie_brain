@@ -7,6 +7,10 @@
 const emit = defineEmits(['updateView'])
 const views = [
   {
+    label: 'Coach Artie',
+    key: 'coach-artie',
+  },
+  {
     label: 'Memories',
     key: 'memories',
     icon: 'i-heroicons-user',

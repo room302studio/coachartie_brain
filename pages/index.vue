@@ -2,7 +2,7 @@
   <section>
     <SiteNav @updateView="activeView = $event" />
 
-    <div class="max-w-prose mx-auto">
+    <div class=" mx-auto px-10">
       <LatestLog />
     </div>
 
@@ -18,29 +18,20 @@
       <PromptsView />
     </div>
 
-    <Splitpanes
-      class="h-screen px-2 md:px-4 lg:px-8"
-      v-if="activeView === 'memories'"
-      :push-other-panes="false"
-    >
-      <Pane size="50" min-size="20">
+    <Splitpanes class="max-h-screen overflow-y-auto px-2 md:px-4 lg:px-8" v-if="activeView === 'memories'"
+      :push-other-panes="false">
+      <Pane size="18">
+        <MessagesView />
+      </Pane>
+
+      <Pane size="40" min-size="20">
         <VerboseLogViewer />
       </Pane>
-      <Pane size="30" min-size="20">
-        <Splitpanes
-          horizontal
-          :push-other-panes="false"
-          class="@container overflow-y-auto px-1 max-h-screen"
-        >
-          <Pane size="50">
-            <MessagesView />
-          </Pane>
-          <Pane size="50">
-            <MemoriesView />
-          </Pane>
-        </Splitpanes>
+
+      <Pane size="35">
+        <MemoriesView />
       </Pane>
-      <Pane size="10" min-size="2" class="overflow-y-auto max-h-screen">
+      <Pane size="8" min-size="2" class="overflow-y-auto max-h-screen">
         <TodoViewer />
       </Pane>
     </Splitpanes>
@@ -180,8 +171,7 @@ function toggleCollapse(user) {
 </script>
 
 <style>
-.splitpanes {
-}
+.splitpanes {}
 
 .splitpanes__splitter {
   background-color: rgba(255, 255, 255, 0.2);
@@ -203,13 +193,13 @@ function toggleCollapse(user) {
   opacity: 1;
 }
 
-.splitpanes--vertical > .splitpanes__splitter:before {
+.splitpanes--vertical>.splitpanes__splitter:before {
   left: -12px;
   right: -12px;
   height: 100%;
 }
 
-.splitpanes--horizontal > .splitpanes__splitter:before {
+.splitpanes--horizontal>.splitpanes__splitter:before {
   top: -12px;
   bottom: -12px;
   width: 100%;

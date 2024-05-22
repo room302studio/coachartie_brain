@@ -1,27 +1,23 @@
 <template>
-  <div
-    id="brain-config"
-    class="flex flex-col items-center p-4 max-w-screen-md mx-auto"
-  >
-    <div
-      v-for="(value, index) in configData"
-      :key="value.config_key"
-      class="flex items-center justify-between w-full mb-4"
-    >
+  <div id="brain-config" class="flex flex-col items-center p-4 max-w-screen-md mx-auto">
+    <div v-for="(value, index) in configData" :key="value.config_key"
+      class="flex items-center justify-between w-full mb-4">
+
+      <UTooltip :text="value.notes" v-if="value.notes">
+        <UIcon name="i-heroicons-information-circle" class=" text-gray-500 dark:text-gray-300 mr-4" />
+      </UTooltip>
       <span class="text-sm font-medium text-gray-700 mr-4 min-w-36">{{
-        value.config_key
-      }}</span>
-      <input
-        v-model="configData[index].config_value"
-        @input="markAsUnsaved"
-        class="border rounded p-1 flex-grow"
-        :placeholder="value.config_key"
-      />
+      value.config_key
+    }}</span>
+
+
+      <input v-model="configData[index].config_value" @input="markAsUnsaved" class="border rounded p-1 flex-grow"
+        :placeholder="value.config_key" />
     </div>
     <div v-if="unsavedChanges" class="text-red-500 mt-2">
       You have unsaved changes!
     </div>
-    <button @click="saveConfig" class="mt-4 p-2 bg-blue-500 text-white rounded">
+    <button @click="saveConfig" class="mt-4 p-2 bg-blue-500 text-white rounded block w-full">
       {{ saving ? 'Saving...' : 'Save' }}
     </button>
   </div>
@@ -69,3 +65,4 @@ watch(
   { deep: true }
 )
 </script>
+<style></style>

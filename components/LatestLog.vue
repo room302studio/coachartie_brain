@@ -1,9 +1,6 @@
 <template>
-  <div>
-    <h2
-      class="text-xl mb-4 line-clamp-3 font-mono"
-      v-html="mostRecentMessage"
-    ></h2>
+  <div class="h-48 flex items-center justify-center dark:bg-slate-950 bg-slate-100 rounded-md mb-2">
+    <h2 class="text-base " v-html="mostRecentMessage"></h2>
   </div>
 </template>
 
@@ -24,4 +21,18 @@ if (logsData) {
 }
 
 const mostRecentMessage = computed(() => logs.value[0]?.message)
+
+// Subscribe to new messages
+supabase
+  .channel('messagechannel')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'logs' },
+    (payload) => {
+      logs.value = [payload.new, ...logs.value]
+    }
+  )
+  .subscribe()
+
+
 </script>

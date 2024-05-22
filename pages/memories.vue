@@ -1,17 +1,6 @@
 <template>
   <div>
 
-
-    <div ref="viz">
-      <svg :width="width" :height="height">
-        <!-- <g v-for="(embedding, index) in embeddingPositions" :transform="embeddingToScreenTransform(embedding)"
-          class="embedding">
-          <circle r="2.5" :fill="colorScale(clusterId(index))" />
-
-        </g> -->
-      </svg>
-    </div>
-
     <h2 class="text-2xl font-bold mb-4">Memories</h2>
     <div v-for="memory in memories" :key="memory.id" class="@md:flex mb-2">
 
@@ -28,8 +17,8 @@
           <div class="w-full">
             <span class="text-sm font-medium text-gray-700">
               <span class="font-light bg-gray-900 rounded px-1">{{
-        format(new Date(memory.created_at), 'M/d')
-      }}</span>
+      format(new Date(memory.created_at), 'M/d')
+    }}</span>
               {{ format(new Date(memory.created_at), ' hh:mm:ss') }}
             </span>
           </div>
@@ -37,6 +26,16 @@
       </div>
 
       <pre class="@md:w-4/5 text-xs leading-normal p-1">{{ memory.value }}</pre>
+    </div>
+
+    <div ref="viz">
+      <svg :width="width" :height="height">
+        <!-- <g v-for="(embedding, index) in embeddingPositions" :transform="embeddingToScreenTransform(embedding)"
+          class="embedding">
+          <circle r="2.5" :fill="colorScale(clusterId(index))" />
+
+        </g> -->
+      </svg>
     </div>
 
 

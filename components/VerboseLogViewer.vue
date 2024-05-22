@@ -1,36 +1,20 @@
 <template>
   <div class="@container">
+    <h2 class="text-2xl font-bold mb-4 px-4">Logs</h2>
     <!-- make a multi-select to determine which services to show -->
     <div class="mt-1 px-4">
       <span class="text-sm font-medium">Show logs for:</span>
-      <USelectMenu
-        v-model="selectedServices"
-        :options="uniqueServices"
-        multiple
-      />
+      <USelectMenu v-model="selectedServices" :options="uniqueServices" multiple />
     </div>
 
-    <div
-      class="logs-grid @md:grid @md:grid-cols-2 gap-4 p-4"
-      v-if="filteredLogsByService.length > 0"
-    >
-      <div
-        v-for="serviceLogs in filteredLogsByService"
-        :key="serviceLogs.service"
-      >
+    <div class="logs-grid @md:grid @md:grid-cols-2 gap-4 p-4" v-if="filteredLogsByService.length > 0">
+      <div v-for="serviceLogs in filteredLogsByService" :key="serviceLogs.service">
         <h3 class="text-lg font-medium">{{ serviceLogs.service }}</h3>
         <div
-          class="logs-box max-h-36 @md:max-h-48 @lg:max-h-60 p-1 rounded border border-gray-500/20 overflow-y-auto"
-        >
-          <div
-            v-for="log in serviceLogs.logs"
-            :key="log.id"
-            class="w-full overflow-hidden break-words"
-          >
-            <span
-              class="inline-block leading-none text-xs"
-              v-html="log.message"
-            />
+          class="logs-box max-h-36 @md:max-h-48 @lg:max-h-72 rounded border border-slate-500 overflow-y-auto leading-none py-1 px-2">
+          <div v-for="log in serviceLogs.logs" :key="log.id"
+            class="w-full overflow-hidden break-words my-0 py-0 mb-0.5">
+            <span class="inline-block leading-none text-xs" v-html="log.message" />
           </div>
         </div>
       </div>
@@ -103,7 +87,7 @@ supabase
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'logs' },
     (payload) => {
-      console.log('Change received!', payload)
+      // console.log('Change received!', payload)
       logs.value = [payload.new, ...logs.value]
     }
   )

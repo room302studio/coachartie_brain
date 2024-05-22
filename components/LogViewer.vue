@@ -5,8 +5,8 @@
 
 
 
-    <transition-group name="log-slide" tag="div" class="logs-container">
-      <div v-for="log in clampedFilteredLogs" :key="`${log.id}`" class="w-full overflow-hidden break-words">
+    <transition-group name="log-slide" tag="div" class="logs-container leading-tight">
+      <div v-for="log in clampedFilteredLogs" :key="`${log.id}`" class="w-full overflow-hidden break-words my-0 py-0">
         <UBadge class="inline" v-if="log.level === 'ERROR'" color="red">Error</UBadge>
         <UBadge class="inline" v-else-if="log.level === 'WARNING'" color="yellow">Warning</UBadge>
         <UBadge class="inline" v-else color="gray">Info</UBadge>
@@ -40,7 +40,7 @@ const { data: logsData, error: logsError } = await supabase
   .limit(defaultLogsToShow || 25)
 
 if (logsData) {
-  logs.value = logsData
+  logs.value = logsData\
 }
 
 
