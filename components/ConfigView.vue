@@ -38,6 +38,22 @@ const markAsUnsaved = () => {
   unsavedChanges.value = true
 }
 
+const chatProviderOptions = ["openai", "anthropic", "localhost"]
+
+const chatProviderModelOptions = {
+  openai: [
+    "gpt-4o",
+    "gpt-3.5-turbo",
+
+  ],
+  anthropic: ['claude-3-5-sonnet-20240620',
+    'claude-3-sonnet-20240229',
+    'claude-3-opus-20240229',
+    'claude-3-haiku-20240307',
+  ],
+  localhost: ['lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF']
+}
+
 // Save config data
 const saveConfig = async () => {
   saving.value = true // Activate saving ref

@@ -33,6 +33,12 @@ const views = [
     key: 'capabilities',
     icon: 'i-fluent-cube-32-filled',
     click: () => emit('updateView', 'capabilities')
-  }
+  },
+  {
+    label: 'Logs',
+    key: 'logs',
+    icon: 'i-material-symbols-document-scanner-outline-rounded',
+    click: () => emit('updateView', 'logs')
+  },
 ]
 </script>

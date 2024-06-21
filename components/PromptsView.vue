@@ -1,5 +1,5 @@
 <template>
-  <div class="columns columns-2 gap-4">
+  <div class="md:columns md:columns-2 xl:columns-3 gap-4 lg:gap-8 p-2 md:p-4 lg:p-8">
     <div v-for="(value, index) in promptsData" :key="value.prompt_name" class="mb-4 max-w-prose mx-auto">
       <div class="flex flex-col">
         <div class="flex items-center justify-between mb-2">

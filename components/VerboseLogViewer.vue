@@ -1,13 +1,13 @@
 <template>
-  <div class="@container">
+  <div class="@container ">
     <h2 class="text-2xl font-bold mb-4 px-4">Logs</h2>
     <!-- make a multi-select to determine which services to show -->
-    <div class="mt-1 px-4">
-      <span class="text-sm font-medium">Show logs for:</span>
+    <div class="mt-1 px-4 my-4">
+      <span class="font-medium">Show logs for:</span>
       <USelectMenu v-model="selectedServices" :options="uniqueServices" multiple />
     </div>
 
-    <div class="logs-grid @md:grid @md:grid-cols-2 gap-4 p-4" v-if="filteredLogsByService.length > 0">
+    <!-- <div class="logs-grid @md:grid @md:grid-cols-2 gap-4 p-4" v-if="filteredLogsByService.length > 0">
       <div v-for="serviceLogs in filteredLogsByService" :key="serviceLogs.service">
         <h3 class="text-lg font-medium">{{ serviceLogs.service }}</h3>
         <div
@@ -18,6 +18,17 @@
           </div>
         </div>
       </div>
+    </div> -->
+
+    <!-- just show the raw logs and color errors as red -->
+    <div class="logs-box rounded overflow-y-auto leading-none py-1 px-2 @md:p-8">
+      <div v-for="log in filteredLogs" :key="log.id"
+        class="w-full overflow-hidden break-words my-0 py-0 mb-0.5 @md:mb-1 @lg:mb-2">
+        <!-- <pre>{{ log }}</pre> -->
+
+        <span class="inline-block leading-none" :class="levelToColor(log.level)" v-html="log.message" />
+        <span class="ml-0.5 @lg:ml-4 hidden @md:inline-block">{{ log.service }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -25,6 +36,16 @@
 <script setup>
 const supabase = useSupabaseClient()
 const logs = ref([])
+
+function levelToColor(level) {
+  if (level === 'error') {
+    return 'text-red-500'
+  } else if (level === 'warning') {
+    return 'text-yellow-500'
+  } else {
+    return 'text-gray-500'
+  }
+}
 
 const logClamp = ref(12)
 const defaultLogsToShow = 60
@@ -80,6 +101,11 @@ watch(
   },
   { immediate: true }
 )
+
+// make a much simpler filteredLogs that just filters by service
+const filteredLogs = computed(() => {
+  return logs.value.filter((log) => selectedServices.value.includes(log.service))
+})
 
 supabase
   .channel('messagechannel')
