@@ -25,14 +25,14 @@
         </div>
       </div>
 
-      <pre class="@md:w-4/5 text-xs leading-normal p-1">{{ memory.value }}</pre>
+      <pre class="@md:w-4/5 text-xs leading-normal p-1 text-gray-200">{{ memory.value }}</pre>
     </div>
 
     <div ref="viz">
       <svg :width="width" :height="height">
         <!-- <g v-for="(embedding, index) in embeddingPositions" :transform="embeddingToScreenTransform(embedding)"
           class="embedding">
-          <circle r="2.5" :fill="colorScale(clusterId(index))" />
+          <circle r="2.5" :fill="grayscaleColor(clusterId(index))" />
 
         </g> -->
       </svg>
@@ -49,7 +49,18 @@ import { format } from 'date-fns'
 const supabase = useSupabaseClient()
 const { width, height: windowHeight } = useWindowSize();
 const height = computed(() => windowHeight.value * 0.5)
-const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+// Replace colorScale with a grayscale version
+const colorScale = d3.scaleSequential()
+  .domain([0, 9])
+  .interpolator(d3.interpolateGreys);
+
+// Function to convert cluster IDs to grayscale colors
+function grayscaleColor(id) {
+  // Use shades of gray instead of colors
+  return `rgb(${180 - id * 20}, ${180 - id * 20}, ${180 - id * 20})`;
+}
+
 const xScale = d3.scaleLinear().range([0, width.value]);
 const yScale = d3.scaleLinear().range([0, height.value]);
 
