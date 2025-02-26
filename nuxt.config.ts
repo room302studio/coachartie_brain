@@ -2,6 +2,7 @@ import pkg from './package.json'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  compatibilityDate: '2025-02-25',
   app: {
     head: {
       title: pkg.name,
@@ -10,6 +11,14 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: pkg.version }
       ]
+    }
+  },
+  // Fix for the chunkErrorEvent issue
+  hooks: {
+    'vite:extendConfig': (config) => {
+      if (config.define) {
+        config.define['chunkErrorEvent'] = 'undefined'
+      }
     }
   },
   ssr: false, // for netlify deploy

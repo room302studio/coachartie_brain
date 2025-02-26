@@ -46,7 +46,7 @@ import { group } from 'd3'
 import { format } from 'date-fns'
 import VueJsonPretty from 'vue-json-pretty'
 import 'vue-json-pretty/lib/styles.css'
-import { animate, svg, stagger } from '~/anime.esm.js'
+import { animate, stagger, svg } from '~/anime.esm.js'
 import { ref, reactive, watch } from 'vue'
 
 const activeView = ref('memories')
