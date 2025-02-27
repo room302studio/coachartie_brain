@@ -1,12 +1,31 @@
 <template>
   <div>
-    <div class="bg-slate-100 dark:bg-slate-900 min-h-screen">
+    <NuxtLayout>
       <NuxtPage />
-    </div>
+    </NuxtLayout>
   </div>
 </template>
-<script setup></script>
+
+<script setup>
+import { onMounted } from 'vue';
+
+// Set dark mode by default for the hacker aesthetic
+onMounted(() => {
+  document.documentElement.classList.add('dark');
+});
+</script>
+
 <style>
+/* Dark mode tweaks */
+html {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #000000;
+  color: #ffffff;
+}
+
 /* use Figtree font for everything */
 body {
   font-family: 'Figtree', sans-serif;

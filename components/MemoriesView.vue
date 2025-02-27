@@ -104,14 +104,6 @@
                 MSG:{{ memory.related_message_id }}
               </span>
             </div>
-            <div>
-              <button 
-                @click="deleteMemory(memory.id)"
-                class="text-xs border border-gray-800 px-1 ml-1"
-              >
-                DELETE
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -199,18 +191,6 @@ const filteredMemories = computed(() => {
   
   return filtered.slice(0, memoriesToShow.value)
 })
-
-// Delete a memory
-async function deleteMemory(id) {
-  const { error } = await supabase
-    .from('memories')
-    .delete()
-    .eq('id', id)
-  
-  if (!error) {
-    memories.value = memories.value.filter(memory => memory.id !== id)
-  }
-}
 
 // Subscribe to new memories
 supabase

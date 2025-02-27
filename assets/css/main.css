@@ -1,0 +1,213 @@
+/* Global styles for Coach Artie */
+
+/* Custom Font */
+@font-face {
+  font-family: 'Monaspace';
+  src: url('https://cdn.jsdelivr.net/gh/githubnext/monaspace@v1.000/fonts/webfonts/MonaspaceNeon-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Set Monaspace as default monospace font */
+:root {
+  --font-mono: 'Monaspace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+body, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Force true black background in dark mode */
+.dark body,
+.dark .bg-gray-900 {
+  background-color: #000000 !important;
+}
+
+.dark .border-gray-800 {
+  border-color: #333333 !important;
+}
+
+/* Hack background patterns */
+.hack-bg {
+  background-image: 
+    radial-gradient(rgba(0, 0, 0, 0.1) 2px, transparent 2px),
+    radial-gradient(rgba(0, 0, 0, 0.1) 2px, transparent 2px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  position: relative;
+}
+
+.dark .hack-bg {
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.05) 2px, transparent 2px),
+    radial-gradient(rgba(255, 255, 255, 0.05) 2px, transparent 2px);
+}
+
+.hack-bg::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 10px 10px;
+  z-index: -1;
+}
+
+.dark .hack-bg::after {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Scanlines effect */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.05) 51%
+  );
+  background-size: 100% 2px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.dark .scanlines::before {
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(255, 255, 255, 0.05) 51%
+  );
+}
+
+/* Status indicators */
+.hack-indicator {
+  background-color: #374151; /* gray-700 */
+  border-radius: 50%;
+  display: inline-block;
+  animation: hack-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.dark .hack-indicator {
+  background-color: #D1D5DB; /* gray-300 */
+}
+
+.hack-indicator-red {
+  background-color: #EF4444; /* red-500 */
+  border-radius: 50%;
+  display: inline-block;
+  animation: hack-pulse-red 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.hack-indicator-green {
+  background-color: #10B981; /* green-500 */
+  border-radius: 50%;
+  display: inline-block;
+  animation: hack-pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Animations */
+@keyframes hack-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes hack-pulse-red {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 3px rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 1px rgba(239, 68, 68, 0.5);
+  }
+}
+
+@keyframes hack-pulse-green {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 3px rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 1px rgba(16, 185, 129, 0.5);
+  }
+}
+
+/* Glitch Text Effect */
+.glitch-text {
+  position: relative;
+  animation: glitch-skew 1s infinite linear alternate-reverse;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: "[>_]";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+}
+
+.glitch-text::before {
+  color: rgba(255, 255, 255, 0.7);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch-text::after {
+  color: rgba(0, 0, 0, 0.3);
+  animation: glitch-anim2 1s infinite linear alternate-reverse;
+}
+
+.dark .glitch-text::before {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dark .glitch-text::after {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.hack-title {
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.dark .hack-title {
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Simple fade for items */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

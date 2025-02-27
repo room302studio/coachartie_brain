@@ -13,6 +13,8 @@ export default defineNuxtConfig({
       ]
     }
   },
+  // Global CSS
+  css: ['~/assets/css/main.css'],
   // Fix for the chunkErrorEvent issue
   hooks: {
     'vite:extendConfig': (config) => {
@@ -44,7 +46,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/', '/memories', '/logs', '/queue']
+      exclude: ['/', '/memories', '/logs', '/queue', '/prompts', '/config']
     }
   },
   runtimeConfig: {

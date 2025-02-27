@@ -1,17 +1,8 @@
 <template>
   <div class="font-mono">
-    <div class="flex items-center justify-between mb-2 border-b border-gray-800 pb-1">
-      <div class="flex items-center">
-        <span class="text-xs">SYSTEM_LOGS</span>
-        <span class="text-xs ml-2">[{{ logs.length }}]</span>
-      </div>
-      <button 
-        @click="clearLogs"
-        class="text-xs border border-gray-800 px-1"
-        aria-label="Clear logs"
-      >
-        [CLEAR]
-      </button>
+    <div class="flex items-center mb-2 border-b border-gray-800 pb-1">
+      <span class="text-xs">SYSTEM_LOGS</span>
+      <span class="text-xs ml-2">[{{ logs.length }}]</span>
     </div>
     
     <div class="max-h-[calc(100vh-300px)] overflow-y-auto">
@@ -65,11 +56,6 @@ function addLog(message, service = 'SYSTEM', level = 'info') {
   if (logs.value.length > maxLogs) {
     logs.value = logs.value.slice(0, maxLogs)
   }
-}
-
-// Clear all logs
-function clearLogs() {
-  logs.value = []
 }
 
 // Event listener for custom log events
