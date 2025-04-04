@@ -12,6 +12,44 @@
 /* Set Monaspace as default monospace font */
 :root {
   --font-mono: 'Monaspace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Information hierarchy colors - Light Mode */
+  --primary-text-light: rgba(0, 0, 0, 0.95);    /* Primary content - dark for light mode */
+  --secondary-text-light: rgba(0, 0, 0, 0.75);  /* Secondary information */
+  --tertiary-text-light: rgba(0, 0, 0, 0.55);   /* UI elements, labels */
+  --quaternary-text-light: rgba(0, 0, 0, 0.35); /* Background UI elements */
+  
+  --primary-border-light: rgba(0, 0, 0, 0.2);   /* Primary borders */
+  --secondary-border-light: rgba(0, 0, 0, 0.1); /* Secondary/subtle borders */
+  
+  /* Information hierarchy colors - Dark Mode */
+  --primary-text-dark: rgba(255, 255, 255, 0.95);    /* Primary content */
+  --secondary-text-dark: rgba(255, 255, 255, 0.75);  /* Secondary information */
+  --tertiary-text-dark: rgba(255, 255, 255, 0.55);   /* UI elements, labels */
+  --quaternary-text-dark: rgba(255, 255, 255, 0.35); /* Background UI elements */
+  
+  --primary-border-dark: rgba(255, 255, 255, 0.2);   /* Primary borders */
+  --secondary-border-dark: rgba(255, 255, 255, 0.1); /* Secondary/subtle borders */
+  
+  /* Default to light mode values */
+  --primary-text: var(--primary-text-light);
+  --secondary-text: var(--secondary-text-light);
+  --tertiary-text: var(--tertiary-text-light);
+  --quaternary-text: var(--quaternary-text-light);
+  
+  --primary-border: var(--primary-border-light);
+  --secondary-border: var(--secondary-border-light);
+}
+
+/* Apply dark mode colors when dark class is present */
+.dark {
+  --primary-text: var(--primary-text-dark);
+  --secondary-text: var(--secondary-text-dark);
+  --tertiary-text: var(--tertiary-text-dark);
+  --quaternary-text: var(--quaternary-text-dark);
+  
+  --primary-border: var(--primary-border-dark);
+  --secondary-border: var(--secondary-border-dark);
 }
 
 body, .font-mono {
@@ -25,7 +63,32 @@ body, .font-mono {
 }
 
 .dark .border-gray-800 {
-  border-color: #333333 !important;
+  border-color: var(--primary-border) !important;
+}
+
+/* Text hierarchy classes */
+.text-primary {
+  color: var(--primary-text);
+}
+
+.text-secondary {
+  color: var(--secondary-text);
+}
+
+.text-tertiary {
+  color: var(--tertiary-text);
+}
+
+.text-quaternary {
+  color: var(--quaternary-text);
+}
+
+.border-primary {
+  border-color: var(--primary-border);
+}
+
+.border-secondary {
+  border-color: var(--secondary-border);
 }
 
 /* Hack background patterns */

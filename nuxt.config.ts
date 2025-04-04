@@ -46,7 +46,15 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/', '/memories', '/logs', '/queue', '/prompts', '/config']
+      exclude: [
+        '/',
+        '/memories',
+        '/logs',
+        '/queue',
+        '/prompts',
+        '/config',
+        '/debugChat'
+      ]
     }
   },
   runtimeConfig: {

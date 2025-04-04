@@ -1,117 +1,396 @@
 <template>
-  <div class="w-full font-mono">
-    <div class="flex justify-between border-b border-gray-800 pb-1 mb-2">
-      <div class="flex items-center">
-        <span class="text-base mr-2">COACH_ARTIE_v0.1</span>
-        <span class="text-xs">{{ currentTimestamp }}</span>
+  <div class="font-mono border-r border-primary h-full p-0.5 bg-white dark:bg-black text-gray-900 dark:text-white">
+    <!-- Status indicators -->
+    <div class="border-b border-secondary pb-0.5 mb-1">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="w-1.5 h-1.5 rounded-full mr-1"
+            :class="connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'">
+          </div>
+          <span class="text-[10px] text-gray-700 dark:text-tertiary">{{ connectionStatus.toUpperCase() }}</span>
+        </div>
+        <div class="text-[10px] text-gray-500 dark:text-quaternary">{{ currentTime }}</div>
       </div>
-      
-      <div class="text-xs flex items-center">
-        <span v-for="(stat, index) in stats" :key="index" class="ml-4">
-          {{ stat.label }}:{{ stat.value }}
-        </span>
-        
-        <button 
-          @click="navigateTo('/')"
-          class="ml-4 text-xs border border-gray-800 px-1"
-          :class="{ 'border-b-2': $route.path === '/' }"
-        >
-          DASHBOARD
-        </button>
-        
-        <button 
-          @click="navigateTo('/memories')"
-          class="ml-1 text-xs border border-gray-800 px-1"
-          :class="{ 'border-b-2': $route.path === '/memories' }"
-        >
-          MEMORIES
-        </button>
-        
-        <button 
-          @click="navigateTo('/prompts')"
-          class="ml-1 text-xs border border-gray-800 px-1"
-          :class="{ 'border-b-2': $route.path === '/prompts' }"
-        >
-          PROMPTS
-        </button>
-        
-        <button 
-          @click="navigateTo('/config')"
-          class="ml-1 text-xs border border-gray-800 px-1"
-          :class="{ 'border-b-2': $route.path === '/config' }"
-        >
-          CONFIG
-        </button>
+      <div class="flex items-center mt-0.5">
+        <div class="w-1.5 h-1.5 rounded-full mr-1"
+          :class="systemStatus === 'ready' ? 'bg-green-500' : systemStatus === 'busy' ? 'bg-yellow-500' : 'bg-red-500'">
+        </div>
+        <span class="text-[10px] text-gray-700 dark:text-tertiary">{{ systemStatus.toUpperCase() }}</span>
       </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="grid grid-cols-3 gap-0.5 border-b border-secondary pb-0.5 mb-1">
+      <div class="text-center">
+        <div class="text-[10px] text-gray-500 dark:text-quaternary">MEMORIES</div>
+        <div class="text-[10px] text-gray-700 dark:text-secondary">{{ stats.memories }}</div>
+      </div>
+      <div class="text-center">
+        <div class="text-[10px] text-gray-500 dark:text-quaternary">MESSAGES</div>
+        <div class="text-[10px] text-gray-700 dark:text-secondary">{{ stats.messages }}</div>
+      </div>
+      <div class="text-center">
+        <div class="text-[10px] text-gray-500 dark:text-quaternary">QUEUE</div>
+        <div class="text-[10px] text-gray-700 dark:text-secondary">{{ stats.queue }}</div>
+      </div>
+    </div>
+
+    <!-- Navigation links -->
+    <div class="grid grid-cols-2 gap-0.5 border-b border-secondary pb-0.5 mb-1">
+      <NuxtLink v-for="link in navLinks" :key="link.path" :to="link.path"
+        class="text-[10px] text-gray-700 dark:text-tertiary hover:text-gray-900 dark:hover:text-secondary px-0.5 py-0.5"
+        active-class="border-l border-secondary text-gray-900 dark:text-primary">
+        {{ link.name }}
+      </NuxtLink>
+    </div>
+
+    <!-- System info -->
+    <div class="text-[10px] text-gray-500 dark:text-quaternary">
+      <div class="flex justify-between">
+        <span>MODEL:</span>
+        <span class="text-gray-700 dark:text-tertiary">{{ systemInfo.model }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span>TEMP:</span>
+        <span class="text-gray-700 dark:text-tertiary">{{ systemInfo.temperature }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span>VERSION:</span>
+        <span class="text-gray-700 dark:text-tertiary">{{ systemInfo.version }}</span>
+      </div>
+    </div>
+
+    <!-- Light/Dark Mode Toggle -->
+    <div class="flex justify-between items-center mt-1 py-1 border-t border-secondary">
+      <span class="text-[10px] text-gray-500 dark:text-quaternary">THEME:</span>
+      <button @click="toggleDarkMode"
+        class="text-[10px] text-gray-700 dark:text-tertiary hover:text-gray-900 dark:hover:text-secondary">
+        {{ isDarkMode ? 'LIGHT MODE' : 'DARK MODE' }}
+      </button>
+    </div>
+
+    <!-- Activity sparkline -->
+    <div class="mt-1 border-t border-secondary pt-0.5">
+      <div class="text-[10px] text-gray-500 dark:text-quaternary mb-0.5">ACTIVITY (24H)</div>
+      <EmbeddableSparkline :data="activityData" :height="20" :color="isDarkMode ? '#14B8A6' : '#0F766E'"
+        :show-axis="false" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-
-const router = useRouter()
-const route = useRoute()
-
-// Stats data
-const stats = ref([
-  { label: 'USERS', value: 0 },
-  { label: 'MSGS', value: 0 },
-  { label: 'MEMORIES', value: 0 },
-  { label: 'TODOS', value: 0 }
-])
+import { ref, onMounted, computed, watch } from 'vue'
+import EmbeddableSparkline from '~/components/EmbeddableSparkline.vue'
+import { useSupabaseClient } from '#imports'
 
 const supabase = useSupabaseClient()
 
-// Current timestamp
-const currentTimestamp = ref('00:00:00')
+// Dark mode state
+const isDarkMode = ref(true)
 
-// Update timestamp
+// Reactive variables
+const connectionStatus = ref('disconnected')
+const systemStatus = ref('initializing')
+const currentTime = ref('')
+
+// Navigation links
+const navLinks = [
+  { path: '/', name: 'DASHBOARD' },
+  { path: '/memories', name: 'MEMORIES' },
+  { path: '/messages', name: 'MESSAGES' },
+  { path: '/prompts', name: 'PROMPTS' },
+  { path: '/todos', name: 'TODOS' },
+  { path: '/visualizations', name: 'VISUALIZE' },
+  { path: '/status', name: 'STATUS' },
+  { path: '/config', name: 'CONFIG' }
+]
+
+// Stats
+const stats = ref({
+  memories: 0,
+  messages: 0,
+  queue: 0
+})
+
+// System info
+const systemInfo = ref({
+  model: 'Loading...',
+  temperature: '0.0',
+  version: '0.1.0'
+})
+
+// Config
+const config = ref({
+  default_model: '',
+  temperature: 0,
+})
+
+// Activity data
+const activityData = ref([])
+
+// Toggle dark mode
+function toggleDarkMode() {
+  isDarkMode.value = !isDarkMode.value
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark')
+    localStorage.setItem('darkMode', 'dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+    localStorage.setItem('darkMode', 'light')
+  }
+}
+
+// Fetch config from the database
+async function fetchConfig() {
+  try {
+    const { data, error } = await supabase
+      .from('config')
+      .select('config_key, config_value, notes')
+
+    if (error) throw error
+
+    if (data && data.length > 0) {
+      // Process key-value pairs into config object
+      const configMap = {}
+      data.forEach(item => {
+        configMap[item.config_key] = item.config_value
+      })
+
+      // Update local config with values from database
+      config.value = {
+        default_model: configMap['default_model'] || 'gpt-3.5-turbo',
+        temperature: parseFloat(configMap['temperature'] || '0.7')
+      }
+
+      // Update systemInfo with real values
+      systemInfo.value.model = formatModelName(config.value.default_model)
+      systemInfo.value.temperature = config.value.temperature.toString()
+
+      // Update version if available
+      if (configMap['version']) {
+        systemInfo.value.version = configMap['version']
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching config:', err)
+  }
+}
+
+// Format model name for display
+function formatModelName(model) {
+  if (!model) return 'Unknown'
+
+  // Convert model name to display format
+  const modelMap = {
+    'gpt-4': 'GPT-4',
+    'gpt-4-turbo': 'GPT-4 Turbo',
+    'gpt-3.5-turbo': 'GPT-3.5',
+    'claude-3-opus': 'Claude Opus',
+    'claude-3-sonnet': 'Claude Sonnet',
+    'claude-3-haiku': 'Claude Haiku'
+  }
+
+  return modelMap[model] || model
+}
+
+// Generate activity data for the sparkline
+async function generateActivityData() {
+  try {
+    // Try to fetch real activity data
+    const hoursAgo24 = new Date()
+    hoursAgo24.setHours(hoursAgo24.getHours() - 24)
+
+    // Get counts of items created in the last 24 hours, grouped by hour
+    const { data: memoryData, error: memoryError } = await supabase
+      .from('memories')
+      .select('created_at')
+      .gte('created_at', hoursAgo24.toISOString())
+
+    if (memoryError) throw memoryError
+
+    // Process data to hourly counts
+    const hourlyData = processTimestampsToHourly(memoryData || [], 'created_at')
+    activityData.value = hourlyData
+
+  } catch (err) {
+    console.error('Error fetching activity data:', err)
+    // Use fallback data (zeros) instead of random data
+    const now = new Date()
+    const data = []
+
+    for (let i = 23; i >= 0; i--) {
+      const date = new Date(now)
+      date.setHours(now.getHours() - i)
+      date.setMinutes(0, 0, 0)
+
+      data.push({
+        timestamp: date.toISOString(),
+        count: 0
+      })
+    }
+
+    activityData.value = data
+  }
+}
+
+// Process timestamps to hourly counts
+function processTimestampsToHourly(items, dateField) {
+  // Create a map of the last 24 hours
+  const hourlyMap = {}
+  const now = new Date()
+
+  for (let i = 23; i >= 0; i--) {
+    const date = new Date(now)
+    date.setHours(now.getHours() - i)
+    date.setMinutes(0, 0, 0)
+    date.setSeconds(0)
+    date.setMilliseconds(0)
+
+    const isoHour = date.toISOString()
+    hourlyMap[isoHour] = 0
+  }
+
+  // Count items per hour
+  items.forEach(item => {
+    const date = new Date(item[dateField])
+    date.setMinutes(0, 0, 0)
+    date.setSeconds(0)
+    date.setMilliseconds(0)
+
+    const hourKey = date.toISOString()
+    if (hourlyMap[hourKey] !== undefined) {
+      hourlyMap[hourKey]++
+    }
+  })
+
+  // Convert to array format
+  return Object.entries(hourlyMap).map(([timestamp, count]) => ({
+    timestamp,
+    count
+  }))
+}
+
+// Update current time
 function updateTime() {
   const now = new Date()
-  currentTimestamp.value = now.toTimeString().slice(0, 8)
+  currentTime.value = now.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
 }
 
-// Navigation function
-function navigateTo(path) {
-  router.push(path)
-}
-
-// Fetch stats data
+// Fetch real stats
 async function fetchStats() {
-  // Messages count
-  const { count: messagesCount } = await supabase
-    .from('messages')
-    .select('*', { count: 'exact', head: true })
-  
-  // Users count
-  const { count: usersCount } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true })
-  
-  // Memories count
-  const { count: memoriesCount } = await supabase
-    .from('memories')
-    .select('*', { count: 'exact', head: true })
-  
-  // Todos count
-  const { count: todosCount } = await supabase
-    .from('todos')
-    .select('*', { count: 'exact', head: true })
-  
-  stats.value[0].value = usersCount || 0
-  stats.value[1].value = messagesCount || 0
-  stats.value[2].value = memoriesCount || 0
-  stats.value[3].value = todosCount || 0
+  try {
+    // Get counts from database tables
+    const memoriesQuery = supabase.from('memories').select('id', { count: 'exact', head: true })
+    const messagesQuery = supabase.from('messages').select('id', { count: 'exact', head: true })
+    const queueQuery = supabase.from('queue').select('id', { count: 'exact', head: true })
+
+    const [memoriesResult, messagesResult, queueResult] = await Promise.all([
+      memoriesQuery,
+      messagesQuery,
+      queueQuery
+    ])
+
+    stats.value = {
+      memories: memoriesResult.count || 0,
+      messages: messagesResult.count || 0,
+      queue: queueResult.count || 0
+    }
+  } catch (err) {
+    console.error('Error fetching stats:', err)
+    // Do not update with fake data if real data fetch fails
+  }
 }
 
+// Check database connection
+async function checkConnectionStatus() {
+  try {
+    const { data, error } = await supabase.from('memories').select('id').limit(1)
+    connectionStatus.value = error ? 'disconnected' : 'connected'
+  } catch (e) {
+    connectionStatus.value = 'disconnected'
+  }
+}
+
+// Determine system status based on queue
+async function determineSystemStatus() {
+  try {
+    const { data, error } = await supabase
+      .from('queue')
+      .select('status')
+      .eq('status', 'processing')
+      .limit(1)
+
+    if (error) throw error
+
+    systemStatus.value = data && data.length > 0 ? 'busy' : 'ready'
+  } catch (err) {
+    console.error('Error checking system status:', err)
+    systemStatus.value = 'error'
+  }
+}
+
+// Check dark mode from system preference
+function checkSystemDarkMode() {
+  if (typeof window !== 'undefined') {
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode) {
+      // Use saved preference if available
+      isDarkMode.value = savedMode === 'dark';
+    } else {
+      // Fall back to system preference
+      isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    // Apply theme to document
+    if (isDarkMode.value) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+}
+
+// Set up data loading based on visibility
+function setupVisibilityHandler() {
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats()
+        fetchConfig()
+        checkConnectionStatus()
+        determineSystemStatus()
+        generateActivityData()
+      }
+    })
+  }
+}
+
+// Lifecycle
 onMounted(() => {
+  // Check system dark mode preference
+  checkSystemDarkMode()
+
+  // Initial data loads
   updateTime()
-  setInterval(updateTime, 1000)
   fetchStats()
-  
-  // Refresh stats every minute
-  setInterval(fetchStats, 60000)
+  fetchConfig()
+  checkConnectionStatus()
+  determineSystemStatus()
+  generateActivityData()
+
+  // Set up handlers
+  setupVisibilityHandler()
+
+  // Set up intervals (less frequent than before to reduce API calls)
+  setInterval(updateTime, 1000)
+  setInterval(fetchStats, 30000) // Every 30 seconds
+  setInterval(checkConnectionStatus, 60000) // Every minute
+  setInterval(determineSystemStatus, 60000) // Every minute
+  setInterval(generateActivityData, 300000) // Every 5 minutes
 })
 </script>

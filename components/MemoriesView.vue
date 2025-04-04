@@ -1,42 +1,42 @@
 <template>
   <div class="font-mono">
     <!-- Header with controls -->
-    <div class="flex items-center justify-between mb-2 border-b border-gray-800 pb-1">
+    <div class="flex items-center justify-between mb-1 border-b border-gray-300 dark:border-primary pb-0.5">
       <div class="flex items-center">
         <button 
           @click="refreshMemories" 
-          class="text-xs font-mono mr-2 border border-gray-800 px-1"
+          class="text-[10px] text-gray-700 dark:text-tertiary font-mono mr-1 border-r border-gray-300 dark:border-secondary px-0.5 hover:text-gray-900 dark:hover:text-secondary"
           aria-label="Refresh memories"
         >
           [REFRESH]
         </button>
         <button 
           @click="showFilters = !showFilters" 
-          class="text-xs font-mono mr-2 border border-gray-800 px-1"
+          class="text-[10px] text-gray-700 dark:text-tertiary font-mono mr-1 border-r border-gray-300 dark:border-secondary px-0.5 hover:text-gray-900 dark:hover:text-secondary"
         >
           [{{ showFilters ? 'HIDE_FILTER' : 'FILTER' }}]
         </button>
-        <span class="text-xs">[{{ filteredMemories.length }}]</span>
+        <span class="text-[10px] text-gray-700 dark:text-tertiary">[{{ filteredMemories.length }}]</span>
       </div>
       <div>
         <button 
           @click="memoriesToShow = 10"
-          class="text-xs font-mono ml-1 px-1"
-          :class="memoriesToShow === 10 ? 'border-b-2 border-gray-800' : ''"
+          class="text-[10px] text-gray-700 dark:text-tertiary font-mono px-0.5"
+          :class="memoriesToShow === 10 ? 'border-b border-gray-700 dark:border-primary text-gray-900 dark:text-secondary' : ''"
         >
           10
         </button>
         <button 
           @click="memoriesToShow = 25"
-          class="text-xs font-mono ml-1 px-1"
-          :class="memoriesToShow === 25 ? 'border-b-2 border-gray-800' : ''"
+          class="text-[10px] text-gray-700 dark:text-tertiary font-mono px-0.5"
+          :class="memoriesToShow === 25 ? 'border-b border-gray-700 dark:border-primary text-gray-900 dark:text-secondary' : ''"
         >
           25
         </button>
         <button 
           @click="memoriesToShow = 50"
-          class="text-xs font-mono ml-1 px-1"
-          :class="memoriesToShow === 50 ? 'border-b-2 border-gray-800' : ''"
+          class="text-[10px] text-gray-700 dark:text-tertiary font-mono px-0.5"
+          :class="memoriesToShow === 50 ? 'border-b border-gray-700 dark:border-primary text-gray-900 dark:text-secondary' : ''"
         >
           50
         </button>
@@ -44,63 +44,63 @@
     </div>
     
     <!-- Filters -->
-    <div v-if="showFilters" class="border border-gray-800 p-2 mb-2">
-      <div class="grid grid-cols-1 gap-2">
+    <div v-if="showFilters" class="border-b border-gray-300 dark:border-primary p-1 mb-1">
+      <div class="grid grid-cols-1 gap-1">
         <div>
-          <label class="text-xs mb-1 block">USERS:</label>
+          <label class="text-[10px] text-gray-700 dark:text-tertiary mb-0.5 block">USERS:</label>
           <select 
             v-model="selectedUsers" 
             multiple
-            class="w-full text-xs border border-gray-800 p-1"
+            class="w-full text-[10px] text-gray-900 dark:text-secondary bg-transparent border-b border-gray-300 dark:border-secondary p-0.5"
           >
             <option v-for="user in uniqueUsers" :key="user" :value="user">{{ user }}</option>
           </select>
         </div>
         <div>
-          <label class="text-xs mb-1 block">TYPE:</label>
+          <label class="text-[10px] text-gray-700 dark:text-tertiary mb-0.5 block">TYPE:</label>
           <select 
             v-model="selectedTypes" 
             multiple
-            class="w-full text-xs border border-gray-800 p-1"
+            class="w-full text-[10px] text-gray-900 dark:text-secondary bg-transparent border-b border-gray-300 dark:border-secondary p-0.5"
           >
             <option v-for="type in uniqueTypes" :key="type" :value="type">{{ type }}</option>
           </select>
         </div>
         <div>
-          <label class="text-xs mb-1 block">SEARCH:</label>
+          <label class="text-[10px] text-gray-700 dark:text-tertiary mb-0.5 block">SEARCH:</label>
           <input 
             v-model="searchQuery" 
             placeholder="Search memories" 
-            class="w-full text-xs border border-gray-800 p-1"
+            class="w-full text-[10px] text-gray-900 dark:text-secondary bg-transparent border-b border-gray-300 dark:border-secondary p-0.5"
           />
         </div>
       </div>
     </div>
     
     <!-- Memories list -->
-    <div class="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+    <div class="space-y-0.5 max-h-[calc(100vh-250px)] overflow-y-auto">
       <div 
         v-for="memory in filteredMemories" 
         :key="memory.id"
-        class="border border-gray-800 mb-1"
+        class="border-b border-gray-300 dark:border-secondary mb-0.5 hover:bg-gray-100 dark:hover:bg-gray-900"
       >
-        <div class="flex items-center justify-between border-b border-gray-800 p-1">
+        <div class="flex items-center justify-between border-b border-gray-300 dark:border-secondary p-0.5">
           <div class="flex items-center">
-            <span class="text-xs">[{{ memory.user_id || 'SYSTEM' }}]</span>
-            <span v-if="memory.type" class="text-xs ml-2">({{ memory.type }})</span>
+            <span class="text-[10px] text-gray-900 dark:text-primary font-medium">[{{ memory.user_id || 'SYSTEM' }}]</span>
+            <span v-if="memory.type" class="text-[10px] text-gray-700 dark:text-tertiary ml-1">({{ memory.type }})</span>
           </div>
-          <div class="text-xs">
+          <div class="text-[10px] text-gray-700 dark:text-tertiary">
             {{ formatDate(memory.created_at) }}
           </div>
         </div>
         
-        <div class="p-1">
-          <pre class="text-xs border border-gray-800 p-1 whitespace-pre-wrap break-words">{{ memory.value }}</pre>
+        <div class="p-0.5">
+          <pre class="text-[10px] text-gray-900 dark:text-primary border-b border-gray-300 dark:border-secondary p-0.5 whitespace-pre-wrap break-words">{{ memory.value }}</pre>
           
-          <div class="flex justify-between mt-1 text-xs">
+          <div class="flex justify-between mt-0.5 text-[10px] text-gray-500 flex flex-wrap gap-x-2">
             <div>
               <span>CLUSTER:{{ memory.cluster_id || 'NONE' }}</span>
-              <span v-if="memory.related_message_id" class="ml-2">
+              <span v-if="memory.related_message_id" class="ml-1">
                 MSG:{{ memory.related_message_id }}
               </span>
             </div>
@@ -109,8 +109,8 @@
       </div>
       
       <!-- Empty state -->
-      <div v-if="filteredMemories.length === 0" class="text-center py-8 border border-dashed border-gray-800">
-        <span class="text-xs">NO_MEMORIES_FOUND</span>
+      <div v-if="filteredMemories.length === 0" class="text-center py-2 border-b border-dashed border-gray-300 dark:border-secondary">
+        <span class="text-[10px] text-gray-700 dark:text-tertiary">NO_MEMORIES_FOUND</span>
       </div>
     </div>
   </div>

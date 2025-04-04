@@ -1,134 +1,180 @@
 <template>
-  <div class="p-2 font-mono">
-    <!-- Todo controls -->
-    <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center space-x-2">
-        <UButton 
-          size="xs" 
-          color="gray" 
-          variant="ghost" 
-          :icon="showAddTodo ? 'i-heroicons-minus-circle' : 'i-heroicons-plus-circle'"
-          @click="showAddTodo = !showAddTodo"
-          class="text-xs font-mono"
+  <div class="font-mono">
+    <!-- Header with controls -->
+    <div class="flex items-center justify-between mb-1 border-b border-primary pb-0.5">
+      <div class="flex items-center">
+        <button 
+          @click="refreshTodos" 
+          class="text-[10px] text-tertiary font-mono mr-1 border-r border-secondary px-0.5 hover:text-secondary"
+          aria-label="Refresh todos"
         >
-          <span class="font-mono">{{ showAddTodo ? 'CANCEL' : 'ADD_TASK' }}</span>
-        </UButton>
-        <span class="text-xs text-cyan-400">[{{ filteredTodos.length }}]</span>
-      </div>
-      <div>
-        <USelectMenu
-          v-model="todoFilter"
-          :options="['All', 'Active', 'Completed']"
-          size="xs"
-          class="w-24 font-mono text-xs"
-          placeholder="Filter"
-        />
+          [REFRESH]
+        </button>
+        <button 
+          @click="showAddForm = !showAddForm" 
+          class="text-[10px] text-tertiary font-mono mr-1 border-r border-secondary px-0.5 hover:text-secondary"
+        >
+          [{{ showAddForm ? 'HIDE_ADD' : 'ADD' }}]
+        </button>
+        <button 
+          @click="showFilters = !showFilters" 
+          class="text-[10px] text-tertiary font-mono mr-1 border-r border-secondary px-0.5 hover:text-secondary"
+        >
+          [{{ showFilters ? 'HIDE_FILTER' : 'FILTER' }}]
+        </button>
+        <span class="text-[10px] text-tertiary">[{{ filteredTodos.length }}]</span>
       </div>
     </div>
     
-    <!-- Add todo form -->
-    <div v-if="showAddTodo" class="bg-slate-700 dark:bg-slate-900 border border-slate-600 dark:border-slate-800 rounded-sm p-3 mb-3 animate-fade-in">
-      <div class="space-y-2">
+    <!-- Add Todo Form -->
+    <div v-if="showAddForm" class="border-b border-primary p-1 mb-1">
+      <div class="grid grid-cols-1 gap-1">
         <div>
-          <label class="text-xs text-slate-300 mb-1 block font-mono">TASK_NAME</label>
-          <UInput 
-            v-model="newTodo.task" 
-            placeholder="Enter task name" 
-            size="sm"
-            class="font-mono text-xs"
+          <label class="text-[10px] text-tertiary mb-0.5 block">TITLE:</label>
+          <input 
+            v-model="newTodo.title" 
+            placeholder="Todo title" 
+            class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5"
           />
         </div>
         <div>
-          <label class="text-xs text-slate-300 mb-1 block font-mono">DESCRIPTION</label>
-          <UTextarea 
+          <label class="text-[10px] text-tertiary mb-0.5 block">DESCRIPTION:</label>
+          <textarea 
             v-model="newTodo.description" 
-            placeholder="Enter description" 
-            rows="2"
-            class="font-mono text-xs"
-          />
+            placeholder="Todo description" 
+            class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5 min-h-[40px] resize-y"
+          ></textarea>
         </div>
-        <div class="flex justify-end space-x-2">
-          <UButton 
-            size="xs" 
-            color="gray" 
-            variant="ghost" 
-            @click="showAddTodo = false"
-            class="text-xs font-mono"
+        <div class="grid grid-cols-2 gap-1">
+          <div>
+            <label class="text-[10px] text-tertiary mb-0.5 block">PRIORITY:</label>
+            <select 
+              v-model="newTodo.priority" 
+              class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5"
+            >
+              <option value="low">LOW</option>
+              <option value="medium">MEDIUM</option>
+              <option value="high">HIGH</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-tertiary mb-0.5 block">STATUS:</label>
+            <select 
+              v-model="newTodo.status" 
+              class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5"
+            >
+              <option value="pending">PENDING</option>
+              <option value="in_progress">IN_PROGRESS</option>
+              <option value="completed">COMPLETED</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <button 
+            @click="addTodo" 
+            class="text-[10px] text-tertiary font-mono px-1 py-0.5 border border-secondary hover:bg-gray-900"
+            :disabled="isAddingTodo"
           >
-            CANCEL
-          </UButton>
-          <UButton 
-            size="xs" 
-            color="teal" 
-            variant="solid" 
-            icon="i-heroicons-plus"
-            @click="addTodo"
-            class="text-xs font-mono"
-          >
-            ADD_TASK
-          </UButton>
+            {{ isAddingTodo ? 'ADDING...' : 'ADD_TODO' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div v-if="showFilters" class="border-b border-primary p-1 mb-1">
+      <div class="grid grid-cols-1 gap-1">
+        <div class="grid grid-cols-2 gap-1">
+          <div>
+            <label class="text-[10px] text-tertiary mb-0.5 block">STATUS:</label>
+            <select 
+              v-model="filters.status" 
+              class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5"
+            >
+              <option value="">ALL</option>
+              <option value="pending">PENDING</option>
+              <option value="in_progress">IN_PROGRESS</option>
+              <option value="completed">COMPLETED</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-tertiary mb-0.5 block">PRIORITY:</label>
+            <select 
+              v-model="filters.priority" 
+              class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5"
+            >
+              <option value="">ALL</option>
+              <option value="low">LOW</option>
+              <option value="medium">MEDIUM</option>
+              <option value="high">HIGH</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] text-tertiary mb-0.5 block">SEARCH:</label>
+          <input 
+            v-model="filters.search" 
+            placeholder="Search todos" 
+            class="w-full text-[10px] text-secondary bg-transparent border-b border-secondary p-0.5"
+          />
         </div>
       </div>
     </div>
     
     <!-- Todos list -->
-    <div class="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto scroller pr-1">
-      <TransitionGroup name="fade">
-        <div 
-          v-for="todo in filteredTodos" 
-          :key="todo.id" 
-          class="bg-slate-700 dark:bg-slate-900 border border-slate-600 dark:border-slate-800 rounded-sm overflow-hidden hover:border-cyan-900 dark:hover:border-cyan-800 transition-colors duration-200"
-          :class="{'border-l-4 border-l-teal-500': !todo.completed, 'border-l-4 border-l-gray-500': todo.completed}"
-        >
-          <div class="p-2">
-            <div class="flex items-start">
-              <div class="pt-0.5">
-                <UCheckbox 
-                  v-model="todo.completed"
-                  @change="toggleTodo(todo)"
-                  size="sm"
-                />
-              </div>
-              <div class="ml-2 flex-1">
-                <div class="flex justify-between">
-                  <p class="text-xs font-medium" :class="{'line-through text-slate-400': todo.completed, 'text-teal-400': !todo.completed}">
-                    {{ todo.task }}
-                  </p>
-                  <UButton
-                    size="2xs"
-                    color="red"
-                    variant="ghost"
-                    icon="i-heroicons-trash"
-                    @click="deleteTodo(todo.id)"
-                    class="text-xs font-mono -mr-1 -mt-1"
-                  />
-                </div>
-                <p v-if="todo.description" class="text-xs text-slate-300 mt-1 bg-slate-800 dark:bg-black border border-slate-700 dark:border-slate-900 rounded-sm p-1.5 break-words">
-                  <span class="text-green-400 font-mono">{{ todo.description }}</span>
-                </p>
-                <div class="flex justify-between items-center mt-2 text-xs text-slate-400">
-                  <div class="flex items-center space-x-2">
-                    <span class="flex items-center">
-                      <UIcon name="i-heroicons-clock" class="w-3 h-3 mr-1" />
-                      {{ formatTimeAgo(todo.created_at) }}
-                    </span>
-                    <span v-if="todo.due_date" class="flex items-center">
-                      <UIcon name="i-heroicons-calendar" class="w-3 h-3 mr-1" />
-                      due {{ formatDate(todo.due_date) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div class="space-y-0.5 max-h-[calc(100vh-250px)] overflow-y-auto">
+      <div 
+        v-for="todo in filteredTodos" 
+        :key="todo.id"
+        class="border-b border-secondary mb-0.5 hover:bg-gray-900"
+      >
+        <div class="flex items-center justify-between border-b border-secondary p-0.5">
+          <div class="flex items-center">
+            <input 
+              type="checkbox" 
+              :checked="todo.status === 'completed'" 
+              @change="toggleTodoStatus(todo)"
+              class="mr-1 h-2 w-2"
+            />
+            <span 
+              class="text-[10px] font-medium"
+              :class="{
+                'text-primary': todo.status !== 'completed',
+                'text-tertiary line-through': todo.status === 'completed',
+                'text-red-500': todo.priority === 'high',
+                'text-yellow-500': todo.priority === 'medium',
+                'text-green-500': todo.priority === 'low'
+              }"
+            >
+              {{ todo.title }}
+            </span>
+          </div>
+          <div class="text-[10px] text-tertiary">
+            {{ formatDate(todo.created_at) }}
           </div>
         </div>
-      </TransitionGroup>
+        
+        <div class="p-0.5">
+          <pre v-if="todo.description" class="text-[10px] text-primary border-b border-secondary p-0.5 whitespace-pre-wrap break-words">{{ todo.description }}</pre>
+          
+          <div class="flex justify-between mt-0.5 text-[10px] text-quaternary">
+            <div>
+              <span>STATUS:{{ todo.status }}</span>
+              <span class="ml-1">PRIORITY:{{ todo.priority }}</span>
+            </div>
+            <button 
+              @click="deleteTodo(todo)" 
+              class="text-[10px] text-red-500 hover:text-red-400"
+            >
+              DELETE
+            </button>
+          </div>
+        </div>
+      </div>
       
       <!-- Empty state -->
-      <div v-if="filteredTodos.length === 0" class="text-center py-8 border border-dashed border-slate-700 dark:border-slate-800">
-        <UIcon name="i-heroicons-check-circle" class="w-10 h-10 mx-auto text-slate-500 mb-3" />
-        <h3 class="text-base font-medium text-slate-300 mb-1 font-mono">NO_TASKS</h3>
-        <p class="text-xs text-slate-400 font-mono">SYSTEM :: Add tasks or adjust filters</p>
+      <div v-if="filteredTodos.length === 0" class="text-center py-2 border-b border-dashed border-secondary">
+        <span class="text-[10px] text-tertiary">NO_TODOS_FOUND</span>
       </div>
     </div>
   </div>
@@ -140,35 +186,46 @@ import { format, formatDistance } from 'date-fns'
 
 const supabase = useSupabaseClient()
 const todos = ref([])
-const showAddTodo = ref(false)
-const todoFilter = ref('All')
-const newTodo = ref({
-  task: '',
-  description: '',
-  completed: false
+const showAddForm = ref(false)
+const showFilters = ref(false)
+const filters = ref({
+  status: '',
+  priority: '',
+  search: ''
 })
+const newTodo = ref({
+  title: '',
+  description: '',
+  priority: 'low',
+  status: 'pending'
+})
+const isAddingTodo = ref(false)
 
 // Fetch todos data
-async function fetchTodos() {
+async function refreshTodos() {
   const { data, error } = await supabase
     .from('todos')
     .select('*')
     .order('created_at', { ascending: false })
 
   if (data) todos.value = data
+  if (error) console.error('Error fetching todos:', error)
 }
 
 // Initial fetch
-fetchTodos()
+refreshTodos()
 
 // Add new todo
 async function addTodo() {
-  if (!newTodo.value.task.trim()) return
+  if (!newTodo.value.title.trim()) return
+  
+  isAddingTodo.value = true
   
   const todo = {
-    task: newTodo.value.task,
+    title: newTodo.value.title,
     description: newTodo.value.description,
-    completed: false,
+    priority: newTodo.value.priority,
+    status: newTodo.value.status,
     created_at: new Date().toISOString()
   }
   
@@ -177,26 +234,37 @@ async function addTodo() {
     .insert([todo])
   
   if (!error) {
-    newTodo.value.task = ''
+    newTodo.value.title = ''
     newTodo.value.description = ''
-    showAddTodo.value = false
+    showAddForm.value = false
   }
+  
+  isAddingTodo.value = false
 }
 
 // Toggle todo completion
-async function toggleTodo(todo) {
+async function toggleTodoStatus(todo) {
+  // Toggle between 'completed' and 'pending'
+  todo.status = todo.status === 'completed' ? 'pending' : 'completed'
+  
   const { data, error } = await supabase
     .from('todos')
-    .update({ completed: todo.completed })
+    .update({ status: todo.status })
     .eq('id', todo.id)
+    
+  if (error) {
+    console.error('Error updating todo status:', error)
+    // Revert the change if there was an error
+    todo.status = todo.status === 'completed' ? 'pending' : 'completed'
+  }
 }
 
 // Delete todo
-async function deleteTodo(id) {
+async function deleteTodo(todo) {
   const { data, error } = await supabase
     .from('todos')
     .delete()
-    .eq('id', id)
+    .eq('id', todo.id)
 }
 
 // Format date
@@ -209,12 +277,30 @@ function formatTimeAgo(timestamp) {
   return formatDistance(new Date(timestamp), new Date(), { addSuffix: true })
 }
 
-// Filtered todos based on selected filter
+// Filtered todos based on selected filters
 const filteredTodos = computed(() => {
-  if (todoFilter.value === 'All') return todos.value
-  if (todoFilter.value === 'Active') return todos.value.filter(todo => !todo.completed)
-  if (todoFilter.value === 'Completed') return todos.value.filter(todo => todo.completed)
-  return todos.value
+  let filtered = todos.value
+  
+  // Filter by status
+  if (filters.value.status) {
+    filtered = filtered.filter(todo => todo.status === filters.value.status)
+  }
+  
+  // Filter by priority
+  if (filters.value.priority) {
+    filtered = filtered.filter(todo => todo.priority === filters.value.priority)
+  }
+  
+  // Filter by search query
+  if (filters.value.search) {
+    const query = filters.value.search.toLowerCase()
+    filtered = filtered.filter(todo => 
+      todo.title.toLowerCase().includes(query) || 
+      (todo.description && todo.description.toLowerCase().includes(query))
+    )
+  }
+  
+  return filtered
 })
 
 // Subscribe to changes in todos
@@ -224,7 +310,7 @@ supabase
     'postgres_changes',
     { event: '*', schema: 'public', table: 'todos' },
     (payload) => {
-      fetchTodos()
+      refreshTodos()
     }
   )
   .subscribe()
