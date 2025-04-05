@@ -1,8 +1,6 @@
 <template>
   <div>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
+    <NuxtPage />
     
     <!-- Fixed position dark mode toggle -->
     <button 

@@ -1,46 +1,57 @@
 <template>
-  <div>
-    <div class="mb-2 border-b border-gray-300 dark:border-gray-800 pb-1 flex justify-between items-center">
-      <span class="text-base">MEMORIES</span>
-      <input v-model="searchQuery" placeholder="SEARCH"
-        class="text-xs border border-gray-300 dark:border-gray-800 p-1 w-36 bg-transparent" />
-    </div>
+  <div class="text-gray-900 dark:text-white">
+    <div class="flex">
+      <!-- Site Navigation Sidebar -->
+      <div class="w-52 min-h-screen">
+        <SiteNav />
+      </div>
 
-    <div class="p-2">
-      <div class="flex flex-col gap-2">
-        <!-- Memory Feed (Primary) -->
-        <div class="flex-grow border border-gray-300 dark:border-gray-800">
-          <div class="p-1">
-            <div class="mb-1 border-b border-gray-300 dark:border-gray-800 pb-1 flex justify-between">
-              <span class="text-xs">MEMORY_FEED</span>
-              <span class="text-xs">[{{ visibleMemories.length }}]</span>
-            </div>
+      <!-- Main Content -->
+      <div class="flex-1 p-4">
+        <div class="mb-2 border-b border-gray-300 dark:border-black pb-1 flex justify-between items-center">
+          <span class="text-base">MEMORIES</span>
+          <input v-model="searchQuery" placeholder="SEARCH"
+            class="text-xs border border-gray-300 dark:border-black p-1 w-36 bg-transparent dark:text-white" />
+        </div>
 
-            <div class="space-y-1 overflow-y-auto" style="height: 75vh;">
-              <div v-for="memory in visibleMemories" :key="memory.id" :id="`memory-${memory.id}`"
-                class="border border-gray-300 dark:border-gray-800 mb-1 cursor-pointer memory-item"
-                :class="{ 'border-gray-500 dark:border-gray-500': selectedMemoryId === memory.id }"
-                @click="selectMemoryById(memory.id)">
-                <div class="flex items-center justify-between border-b border-gray-300 dark:border-gray-800 p-1">
-                  <span class="text-xs font-mono">[{{ memory.user_id || 'SYSTEM' }}]</span>
-                  <span class="text-xs font-mono">{{ formatDate(memory.created_at) }}</span>
+        <div class="p-2">
+          <div class="flex flex-col gap-2">
+            <!-- Memory Feed (Primary) -->
+            <div class="flex-grow border border-gray-300 dark:border-black bg-white dark:bg-black">
+              <div class="p-1">
+                <div class="mb-1 border-b border-gray-300 dark:border-black pb-1 flex justify-between">
+                  <span class="text-xs dark:text-white">MEMORY_FEED</span>
+                  <span class="text-xs dark:text-white">[{{ visibleMemories.length }}]</span>
                 </div>
-                <pre class="text-xs p-1 whitespace-pre-wrap break-words overflow-y-auto">{{ memory.value }}</pre>
-                <div
-                  class="text-[9px] p-1 pt-0 text-gray-500 flex flex-wrap gap-x-2 border-t border-gray-300 dark:border-gray-800">
-                  <span v-if="memory.memory_type">TYPE:{{ memory.memory_type }}</span>
-                  <span v-if="memory.related_message_id">MSG:{{ memory.related_message_id }}</span>
-                  <span>ID:{{ memory.id }}</span>
-                  <span v-if="memory.resource_id">RES:{{ memory.resource_id }}</span>
-                  <span v-if="memory.conversation_id">CONV:{{ memory.conversation_id }}</span>
-                  <span v-if="memory.metadata" class="cursor-help"
-                    :title="JSON.stringify(memory.metadata)">META:✓</span>
-                </div>
-              </div>
 
-              <div v-if="visibleMemories.length === 0"
-                class="text-center py-2 border border-dashed border-gray-300 dark:border-gray-800">
-                <span class="text-xs font-mono">NO_MEMORIES_TO_DISPLAY</span>
+                <div class="space-y-1 overflow-y-auto" style="height: 75vh;">
+                  <div v-for="memory in visibleMemories" :key="memory.id" :id="`memory-${memory.id}`"
+                    class="border border-gray-300 dark:border-black mb-1 cursor-pointer memory-item bg-white dark:bg-black"
+                    :class="{ 'border-gray-500 dark:border-white': selectedMemoryId === memory.id }"
+                    @click="selectMemoryById(memory.id)">
+                    <div class="flex items-center justify-between border-b border-gray-300 dark:border-black p-1">
+                      <span class="text-xs font-mono dark:text-white">[{{ memory.user_id || 'SYSTEM' }}]</span>
+                      <span class="text-xs font-mono dark:text-white">{{ formatDate(memory.created_at) }}</span>
+                    </div>
+                    <pre
+                      class="text-xs p-1 whitespace-pre-wrap break-words overflow-y-auto dark:text-white">{{ memory.value }}</pre>
+                    <div
+                      class="text-[9px] p-1 pt-0 text-gray-500 dark:text-gray-400 flex flex-wrap gap-x-2 border-t border-gray-300 dark:border-black">
+                      <span v-if="memory.memory_type">TYPE:{{ memory.memory_type }}</span>
+                      <span v-if="memory.related_message_id">MSG:{{ memory.related_message_id }}</span>
+                      <span>ID:{{ memory.id }}</span>
+                      <span v-if="memory.resource_id">RES:{{ memory.resource_id }}</span>
+                      <span v-if="memory.conversation_id">CONV:{{ memory.conversation_id }}</span>
+                      <span v-if="memory.metadata" class="cursor-help"
+                        :title="JSON.stringify(memory.metadata)">META:✓</span>
+                    </div>
+                  </div>
+
+                  <div v-if="visibleMemories.length === 0"
+                    class="text-center py-2 border border-dashed border-gray-300 dark:border-black">
+                    <span class="text-xs font-mono dark:text-white">NO_MEMORIES_TO_DISPLAY</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -54,6 +65,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { format } from 'date-fns'
 import { useSupabaseClient } from '#imports'
+import SiteNav from '~/components/SiteNav.vue'
 
 // Basic state
 const memories = ref([])
@@ -138,7 +150,7 @@ onMounted(() => {
 }
 
 .memory-item:hover {
-  background-color: rgba(45, 45, 45, 0.5);
+  background-color: rgba(240, 240, 240, 0.5);
 }
 
 .memory-item pre {
@@ -149,5 +161,11 @@ onMounted(() => {
 
 .memory-item:hover pre {
   max-height: 200px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .memory-item:hover {
+    background-color: #111;
+  }
 }
 </style>
