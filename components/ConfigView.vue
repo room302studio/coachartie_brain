@@ -133,11 +133,14 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useSupabaseClient } from '#imports'
+import type { Database, Tables } from '~/database.types'
 
-const supabase = useSupabaseClient()
+type Config = Tables<'config'>
+
+const supabase = useSupabaseClient<Database>()
 const config = ref({
   openai_api_key: '',
   anthropic_api_key: '',

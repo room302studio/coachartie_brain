@@ -88,17 +88,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { format, formatDistance } from 'date-fns'
 import { useStaggeredAnimation } from '~/composables/useStaggeredAnimation'
+import type { Database, Tables } from '~/database.types'
 
-const messages = ref([])
+type Message = Tables<'messages'>
+
+const messages = ref<Message[]>([])
 const showFilters = ref(false)
-const selectedUsers = ref([])
+const selectedUsers = ref<string[]>([])
 const dateFilter = ref('')
 const searchQuery = ref('')
 
-const supabase = useSupabaseClient()
+const supabase = useSupabaseClient<Database>()
 const defaultMessagesToShow = 12
 const messagesToShow = ref(defaultMessagesToShow)
 
