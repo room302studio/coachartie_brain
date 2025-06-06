@@ -2,7 +2,7 @@ import pkg from './package.json'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-02-25',
+  compatibilityDate: '2025-06-06',
   app: {
     head: {
       title: pkg.name,
