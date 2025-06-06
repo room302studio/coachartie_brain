@@ -7,12 +7,11 @@ FROM node:${NODE_VERSION}-slim as build
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 
 # Install dependencies (fix for npm/rollup bug on Linux)
 RUN npm cache clean --force
-RUN rm -f package-lock.json node_modules/.package-lock.json
-RUN npm install --no-package-lock
+RUN npm install nuxt@^3.13.0 --save-dev
 RUN npm install
 
 # Copy source code
