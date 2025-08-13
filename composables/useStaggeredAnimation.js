@@ -1,4 +1,3 @@
-import { animate, stagger } from '~/anime.esm.js'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 export function useStaggeredAnimation() {
