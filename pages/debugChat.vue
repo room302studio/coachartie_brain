@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useSupabaseClient } from '#imports'
+// // import { useSupabaseClient } from '#imports'
 import { format } from 'date-fns'
 
 // Types
@@ -63,7 +63,7 @@ interface Memory {
   memory_type: string | null
 }
 
-const supabase = useSupabaseClient()
+// // const supabase = useSupabaseClient()
 const users = ref<any[]>([])
 const memories = ref<Memory[]>([])
 const newMessage = ref('')
@@ -81,6 +81,9 @@ function formatDate(timestamp: string) {
 
 // Fetch chat messages
 async function fetchMessages() {
+  // Temporarily disabled - needs migration from Supabase
+  memories.value = []
+  /*
   const { data, error } = await supabase
     .from('memories')
     .select('id, created_at, value, user_id')
@@ -90,10 +93,15 @@ async function fetchMessages() {
 
   if (data) memories.value = data
   if (error) console.error('Error fetching messages:', error)
+  */
 }
 
 // Fetch users (from memories table since we don't have direct user access)
 async function fetchUsers() {
+  // Temporarily disabled - needs migration from Supabase
+  users.value = []
+  return
+  /*
   const { data, error } = await supabase
     .from('memories')
     .select('user_id, created_at')
@@ -115,10 +123,13 @@ async function fetchUsers() {
     }
   }
   if (error) console.error('Error fetching users:', error)
+  */
 }
 
 // Send message
 async function sendMessage() {
+  // Temporarily disabled - needs migration from Supabase
+  /*
   if (!newMessage.value.trim() || !selectedUser.value) return
 
   const memory = {
@@ -138,10 +149,13 @@ async function sendMessage() {
   }
 
   newMessage.value = ''
+  */
 }
 
 // Subscribe to new messages
 function subscribeToMessages() {
+  // Temporarily disabled - needs migration from Supabase
+  /*
   supabase
     .channel('debugchat')
     .on(
@@ -157,12 +171,13 @@ function subscribeToMessages() {
       }
     )
     .subscribe()
+  */
 }
 
 onMounted(() => {
   fetchUsers()
   fetchMessages()
-  subscribeToMessages()
+  // subscribeToMessages()
 })
 </script>
 

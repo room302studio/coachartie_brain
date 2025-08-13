@@ -81,9 +81,9 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import EmbeddableSparkline from '~/components/EmbeddableSparkline.vue'
-import { useSupabaseClient } from '#imports'
+// // import { useSupabaseClient } from '#imports'
 
-const supabase = useSupabaseClient()
+// // const supabase = useSupabaseClient()
 
 // Dark mode state
 const isDarkMode = ref(true)
@@ -142,6 +142,9 @@ function toggleDarkMode() {
 
 // Fetch config from the database
 async function fetchConfig() {
+  // Temporarily disabled - needs migration from Supabase
+  return
+  /*
   try {
     const { data, error } = await supabase
       .from('config')
@@ -174,6 +177,7 @@ async function fetchConfig() {
   } catch (err) {
     console.error('Error fetching config:', err)
   }
+  */
 }
 
 // Format model name for display
@@ -200,17 +204,16 @@ async function generateActivityData() {
     const hoursAgo24 = new Date()
     hoursAgo24.setHours(hoursAgo24.getHours() - 24)
 
-    // Get counts of items created in the last 24 hours, grouped by hour
-    const { data: memoryData, error: memoryError } = await supabase
-      .from('memories')
-      .select('created_at')
-      .gte('created_at', hoursAgo24.toISOString())
-
-    if (memoryError) throw memoryError
-
-    // Process data to hourly counts
-    const hourlyData = processTimestampsToHourly(memoryData || [], 'created_at')
-    activityData.value = hourlyData
+    // Fetch from API instead of Supabase
+    const response = await fetch('/api/status')
+    const statusData = await response.json()
+    
+    // Use the memoriesCreatedData from the status API
+    if (statusData.memoriesCreatedData) {
+      activityData.value = statusData.memoriesCreatedData
+    } else {
+      throw new Error('No activity data')
+    }
 
   } catch (err) {
     console.error('Error fetching activity data:', err)
@@ -284,21 +287,14 @@ function updateTime() {
 // Fetch real stats
 async function fetchStats() {
   try {
-    // Get counts from database tables
-    const memoriesQuery = supabase.from('memories').select('id', { count: 'exact', head: true })
-    const messagesQuery = supabase.from('messages').select('id', { count: 'exact', head: true })
-    const queueQuery = supabase.from('queue').select('id', { count: 'exact', head: true })
-
-    const [memoriesResult, messagesResult, queueResult] = await Promise.all([
-      memoriesQuery,
-      messagesQuery,
-      queueQuery
-    ])
-
+    // Get counts from the status API
+    const response = await fetch('/api/status')
+    const statusData = await response.json()
+    
     stats.value = {
-      memories: memoriesResult.count || 0,
-      messages: messagesResult.count || 0,
-      queue: queueResult.count || 0
+      memories: statusData.memoryCount || 0,
+      messages: statusData.messageCount || 0,
+      queue: statusData.queueCount || 0
     }
   } catch (err) {
     console.error('Error fetching stats:', err)

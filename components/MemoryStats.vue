@@ -53,7 +53,7 @@ const memoryTypesData = ref([])
 const memoryAgeData = ref([])
 
 // Fetch data from Supabase
-const supabase = useSupabaseClient()
+// const supabase = useSupabaseClient()
 
 async function refreshData() {
   await Promise.all([

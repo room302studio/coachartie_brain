@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-const supabase = useSupabaseClient()
+// const supabase = useSupabaseClient()
 const logs = ref([])
 
 function levelToColor(level) {

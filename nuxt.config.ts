@@ -26,7 +26,6 @@ export default defineNuxtConfig({
   ssr: false, // for netlify deploy
   devtools: { enabled: true },
   modules: [
-    '@nuxtjs/supabase',
     '@vueuse/nuxt',
     '@nuxt/ui',
     '@nuxt/content',
@@ -41,21 +40,6 @@ export default defineNuxtConfig({
   ],
   content: {
     documentDriven: true
-  },
-  supabase: {
-    redirectOptions: {
-      login: '/login',
-      callback: '/confirm',
-      exclude: [
-        '/',
-        '/memories',
-        '/logs',
-        '/queue',
-        '/prompts',
-        '/config',
-        '/debugChat'
-      ]
-    }
   },
   runtimeConfig: {
     // add the openai api key to the runtime config

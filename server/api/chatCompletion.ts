@@ -1,37 +1,38 @@
 import { defineEventHandler } from 'h3'
-import axios from 'axios'
 
 // set up .env
 import dotenv from 'dotenv'
 dotenv.config()
 
+// Import Context Alchemy and Prompt Manager for intelligent message building
+async function getServices() {
+  // Dynamic import to avoid module issues
+  const { contextAlchemy } = await import('../../../capabilities/src/services/context-alchemy.js');
+  const { promptManager } = await import('../../../capabilities/src/services/prompt-manager.js');
+  return { contextAlchemy, promptManager };
+}
+
 async function getChatCompletion(
-  messages = [
-    {
-      role: 'system',
-      content: 'You are a helpful assistant.'
-    },
-    {
-      role: 'user',
-      content: 'Hello!'
-    }
-  ]
+  userMessage = 'Hello!',
+  userId = 'brain-user',
+  existingMessages = []
 ) {
   try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-3.5-turbo',
-        messages
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-        }
-      }
-    )
-    const completion = response.data.choices[0].message.content
+    // Get services and base system prompt from database
+    const { contextAlchemy, promptManager } = await getServices();
+    const baseSystemPrompt = await promptManager.getCapabilityInstructions(userMessage);
+    
+    // Use Context Alchemy to build intelligent message chain
+    const { messages } = await contextAlchemy.buildMessageChain(
+      userMessage,
+      userId,
+      baseSystemPrompt,
+      existingMessages
+    );
+
+    // Route through OpenRouter service instead of direct API calls
+    const { openRouterService } = await import('../../../capabilities/src/services/openrouter.js');
+    const completion = await openRouterService.generateFromMessageChain(messages, userId)
     return completion
   } catch (error) {
     console.error('Error getting chat completion:', error)

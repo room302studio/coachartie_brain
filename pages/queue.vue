@@ -313,7 +313,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRuntimeConfig } from '#app'
 
-const supabase = useSupabaseClient()
+// const supabase = useSupabaseClient()
 const config = useRuntimeConfig()
 const baseUrl = config.public.apiBase || ''
 

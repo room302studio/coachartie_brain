@@ -362,7 +362,7 @@ watch([selectedHistoryEntry, wordDiff], () => {
 const { animateStaggered } = useStaggeredAnimation()
 
 // Supabase client
-const supabase = useSupabaseClient()
+// const supabase = useSupabaseClient()
 
 // Format date
 function formatDate(timestamp) {

@@ -135,7 +135,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useSupabaseClient } from '#imports'
+// import { useSupabaseClient } from '#imports'
 import type { Database, Tables } from '~/database.types'
 
 type Config = Tables<'config'>

@@ -64,7 +64,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { format } from 'date-fns'
-import { useSupabaseClient } from '#imports'
+// // import { useSupabaseClient } from '#imports'
 import SiteNav from '~/components/SiteNav.vue'
 
 // Basic state
@@ -73,7 +73,7 @@ const selectedMemoryId = ref(null)
 const searchQuery = ref('')
 
 // Supabase client
-const supabase = useSupabaseClient()
+// // const supabase = useSupabaseClient()
 
 // Format date function
 function formatDate(timestamp) {
@@ -83,16 +83,15 @@ function formatDate(timestamp) {
 // Fetch memories from the database
 async function fetchMemories() {
   try {
-    const { data, error } = await supabase
-      .from('memories')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100)
-
-    if (error) throw error
-
-    if (data) {
-      memories.value = data
+    const response = await fetch('/api/memories?limit=100')
+    const result = await response.json()
+    
+    if (result.success && result.data) {
+      memories.value = result.data.map(m => ({
+        ...m,
+        value: m.content, // Use content field
+        memory_type: m.tags ? 'tagged' : 'general' // Add memory_type for display
+      }))
     }
   } catch (error) {
     console.error('Error fetching memories:', error)
@@ -123,6 +122,8 @@ const visibleMemories = computed(() => {
 
 // Subscribe to new memories via Supabase realtime
 function setupRealtimeSubscription() {
+  // Temporarily disabled - needs migration from Supabase
+  /*
   supabase
     .channel('memorychannel')
     .on(
@@ -133,6 +134,7 @@ function setupRealtimeSubscription() {
       }
     )
     .subscribe()
+  */
 }
 
 // Initialize page
