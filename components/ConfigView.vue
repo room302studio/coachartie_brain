@@ -140,7 +140,7 @@ import type { Database, Tables } from '~/database.types'
 
 type Config = Tables<'config'>
 
-const supabase = useSupabaseClient<Database>()
+const supabase = useDatabase()
 const config = ref({
   openai_api_key: '',
   anthropic_api_key: '',

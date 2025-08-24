@@ -126,7 +126,7 @@ let textElements = null
 // Get Supabase client or create fallback
 let supabase = null
 try {
-  supabase = useSupabaseClient()
+  supabase = useDatabase()
   console.log('Supabase client initialized')
 } catch (error) {
   console.warn('Supabase client not available:', error)

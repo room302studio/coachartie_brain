@@ -1,6 +1,7 @@
 import { defineEventHandler } from 'h3'
 import { format } from 'date-fns'
-import { getDatabase } from '@coachartie/shared'
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
 
 // Define types for our data structures
 interface MessageTypes {
@@ -51,7 +52,11 @@ interface StatusData extends TimeSeriesData, MemoryDistributions {
  */
 export default defineEventHandler(async (event) => {
   try {
-    const db = await getDatabase()
+    const dbPath = process.env.DATABASE_PATH || '/Users/ejfox/code/coachartie2/packages/capabilities/data/coachartie.db'
+    const db = await open({
+      filename: dbPath,
+      driver: sqlite3.Database
+    })
     
     // Get real counts from database (handle missing tables)
     let memoryCountResult = { count: 0 }
@@ -197,6 +202,8 @@ export default defineEventHandler(async (event) => {
     } catch (e) {
       // Queue table might not exist
     }
+    
+    await db.close()
     
     return {
       // Real counts from database

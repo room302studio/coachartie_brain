@@ -148,7 +148,7 @@ const uptimeDays = computed(() => {
 })
 
 // Fetch data from Supabase
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 
 async function fetchData() {
   try {

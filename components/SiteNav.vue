@@ -83,7 +83,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import EmbeddableSparkline from '~/components/EmbeddableSparkline.vue'
 // // import { useSupabaseClient } from '#imports'
 
-// // const supabase = useSupabaseClient()
+// const supabase = useDatabase()
 
 // Dark mode state
 const isDarkMode = ref(true)
@@ -96,6 +96,7 @@ const currentTime = ref('')
 // Navigation links
 const navLinks = [
   { path: '/', name: 'DASHBOARD' },
+  { path: '/debugChat', name: 'CHAT' },
   { path: '/memories', name: 'MEMORIES' },
   { path: '/messages', name: 'MESSAGES' },
   { path: '/prompts', name: 'PROMPTS' },

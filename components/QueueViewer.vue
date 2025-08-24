@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 const queueItems = ref([])
 
 const { data: queueData, error: queueError } = await supabase

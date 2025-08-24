@@ -66,7 +66,7 @@ let sparkline24h = null
 let sparkline7d = null
 
 // Fetch data from Supabase
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 
 async function refreshData() {
   await Promise.all([

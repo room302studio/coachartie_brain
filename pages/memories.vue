@@ -73,7 +73,7 @@ const selectedMemoryId = ref(null)
 const searchQuery = ref('')
 
 // Supabase client
-// // const supabase = useSupabaseClient()
+// const supabase = useDatabase()
 
 // Format date function
 function formatDate(timestamp) {

@@ -1,220 +1,345 @@
 <template>
-  <div class="p-4">
-    <div class="max-w-2xl mx-auto space-y-4">
-      <!-- User Selection -->
-      <div class="border border-gray-200 dark:border-gray-800 p-2 rounded">
-        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">DEBUG_USER:</label>
-        <select v-model="selectedUser"
-          class="w-full bg-transparent border border-gray-200 dark:border-gray-800 p-1 text-sm rounded">
-          <option value="">Select User</option>
-          <option v-for="user in users" :key="user.id" :value="user.id">
-            {{ user.id }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Chat Window -->
-      <div class="border border-gray-200 dark:border-gray-800 rounded p-2 h-[400px] overflow-y-auto">
-        <div v-for="message in chatMessages" :key="message.id" class="mb-2">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-xs font-medium"
-              :class="message.user_id === selectedUser ? 'text-blue-500' : 'text-gray-500'">
-              {{ message.user_id || 'SYSTEM' }}
-            </span>
-            <span class="text-xs text-gray-400">{{ formatDate(message.created_at) }}</span>
-          </div>
-          <div class="bg-gray-100 dark:bg-gray-900 p-2 rounded text-sm">
-            {{ message.value }}
-          </div>
-        </div>
-        <div v-if="chatMessages.length === 0" class="text-center py-4 text-gray-400 text-sm">
-          NO_MESSAGES
+  <div class="h-screen w-screen flex flex-col bg-white dark:bg-black text-gray-800 dark:text-gray-100 overflow-hidden">
+    <!-- Header (compact) -->
+    <header class="px-3 py-1 flex flex-col gap-1 border-b border-gray-200 dark:border-gray-800 text-[10px] select-none">
+      <div class="flex items-center gap-3">
+        <div class="font-semibold tracking-wide text-xs">Debug Chat</div>
+        <div class="opacity-60">Dense mode</div>
+        <div class="ml-auto flex gap-1 items-center">
+          <button
+            class="px-2 py-0.5 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition uppercase"
+            @click="clearChat" :disabled="isLoading">Clear</button>
         </div>
       </div>
+      <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] leading-tight">
+        <span class="opacity-70">Msgs: {{ messages.length }}</span>
+        <span v-if="stats.totalAssistantMessages">Assistant: {{ stats.totalAssistantMessages }}</span>
+        <span v-if="stats.avgLatencyMs">Avg Lat: {{ formatMs(stats.avgLatencyMs) }}</span>
+        <span v-if="stats.lastLatencyMs" class="font-medium">Last Lat: {{ formatMs(stats.lastLatencyMs) }}</span>
+        <span v-if="stats.throughputPerMin">Throughput: {{ stats.throughputPerMin.toFixed(1) }}/min</span>
+        <span v-if="stats.totalTokens">Est Tokens: {{ stats.totalTokens }}</span>
+        <span v-if="stats.memoryHits">Mem Hits: {{ stats.memoryHits }}</span>
+      </div>
+    </header>
 
-      <!-- Input Area -->
-      <div class="flex gap-2">
-        <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..."
-          class="flex-1 bg-transparent border border-gray-200 dark:border-gray-800 p-2 rounded text-sm" autofocus />
-        <button @click="sendMessage" :disabled="!selectedUser || !newMessage.trim()" :class="[
-          'px-4 py-2 rounded text-sm transition-colors',
-          (!selectedUser || !newMessage.trim())
-            ? 'bg-gray-100 dark:bg-gray-900 text-gray-400 cursor-not-allowed'
-            : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700'
-        ]">
-          Send
-        </button>
+    <!-- Chat + Input Container -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Messages Scroll Area -->
+      <div ref="chatWindow" class="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-[13px] leading-snug">
+        <template v-for="(message, i) in messages" :key="message.id">
+          <div class="group relative">
+            <div class="flex items-center gap-2 mb-0.5 text-[10px] uppercase tracking-wide font-medium select-none">
+              <span :class="message.role === 'user' ? 'text-blue-500' : 'text-green-500'">{{ message.role === 'user' ?
+                'You' : 'Artie' }}</span>
+              <span class="text-gray-400">{{ formatTime(message.timestamp) }}</span>
+              <span v-if="showTokens && message.tokenCount" class="text-gray-300 dark:text-gray-600">• {{
+                message.tokenCount }}t</span>
+              <span v-if="message.meta?.processingTime" class="text-purple-600 dark:text-purple-400">• {{
+                formatMs(message.meta.processingTime) }}</span>
+              <span v-if="message.meta?.memoryCount" class="text-amber-600 dark:text-amber-400">• {{
+                message.meta.memoryCount }} mem</span>
+            </div>
+            <div
+              class="rounded px-2 py-1.5 whitespace-pre-wrap break-words border border-transparent group-hover:border-gray-300 dark:group-hover:border-gray-700 transition-colors"
+              :class="message.role === 'user' ? 'bg-blue-50/60 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-900'">
+              <MarkdownRenderer :text="message.content" />
+            </div>
+            <!-- Metadata badges -->
+            <div v-if="message.meta && Object.keys(filteredMeta(message.meta)).length"
+              class="mt-0.5 flex flex-wrap gap-1 pl-1">
+              <template v-for="(val, key) in filteredMeta(message.meta)" :key="key">
+                <span
+                  class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[10px] leading-none flex items-center gap-1 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="toggleMetaDetail(message.id, key)">
+                  <span class="font-medium">{{ key }}</span>
+                  <span class="opacity-70 truncate max-w-[140px]">{{ formatMetaValue(val) }}</span>
+                </span>
+              </template>
+            </div>
+            <!-- Expanded meta detail -->
+            <div v-for="(val, key) in filteredMeta(message.meta || {})" :key="key + '-detail'"
+              v-show="isMetaDetailOpen(message.id, key)"
+              class="mt-1 ml-1 border border-dashed border-gray-300 dark:border-gray-700 rounded p-1.5 bg-white/60 dark:bg-black/40 text-[11px] max-h-48 overflow-auto leading-snug">
+              <pre class="whitespace-pre-wrap break-words">{{ pretty(val) }}</pre>
+            </div>
+          </div>
+        </template>
+
+        <!-- Loading / streaming placeholder -->
+        <div v-if="isLoading" class="animate-pulse">
+          <div class="flex items-center gap-2 mb-0.5 text-[10px] uppercase tracking-wide font-medium">
+            <span class="text-green-500">Artie</span>
+            <span class="text-gray-400">thinking…</span>
+          </div>
+          <div class="rounded px-2 py-1.5 bg-gray-50 dark:bg-gray-900 text-gray-400">…</div>
+        </div>
+      </div>
+
+      <!-- Input Bar (sticky) -->
+      <div class="border-t border-gray-200 dark:border-gray-800 p-2 bg-white/90 dark:bg-black/80 backdrop-blur-sm">
+        <div class="flex items-end gap-2">
+          <textarea ref="textarea" v-model="newMessage" @keydown.enter.exact.prevent="sendMessage"
+            @keydown.enter.shift.exact="insertNewline" :disabled="isLoading"
+            placeholder="Type a message (Enter to send, Shift+Enter newline)"
+            class="flex-1 resize-none bg-transparent rounded border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 px-2 py-1.5 text-[13px] leading-snug max-h-40 disabled:opacity-50"
+            rows="1" />
+          <div class="flex flex-col gap-1 w-28">
+            <button @click="sendMessage" :disabled="!newMessage.trim() || isLoading"
+              class="w-full rounded bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/40 text-white text-[11px] font-medium py-2 tracking-wide uppercase disabled:cursor-not-allowed">Send</button>
+            <button @click="toggleTokens"
+              class="w-full rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-[10px] py-1 uppercase tracking-wide"
+              type="button">Tok {{ showTokens ? 'On' : 'Off' }}</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-// // import { useSupabaseClient } from '#imports'
-import { format } from 'date-fns'
+import { ref, nextTick, watch, defineComponent, h } from 'vue'
 
-// Types
-interface Memory {
-  id: number
-  created_at: string
-  value: string
-  user_id: string | null
-  memory_type: string | null
-}
-
-// // const supabase = useSupabaseClient()
-const users = ref<any[]>([])
-const memories = ref<Memory[]>([])
-const newMessage = ref('')
-const selectedUser = ref('')
-
-// Only show chat messages, sorted newest to oldest
-const chatMessages = computed(() => {
-  return [...memories.value].reverse()
-})
-
-// Format date
-function formatDate(timestamp: string) {
-  return format(new Date(timestamp), 'HH:mm:ss')
-}
-
-// Fetch chat messages
-async function fetchMessages() {
-  // Temporarily disabled - needs migration from Supabase
-  memories.value = []
-  /*
-  const { data, error } = await supabase
-    .from('memories')
-    .select('id, created_at, value, user_id')
-    .eq('memory_type', 'debug_chat')
-    .order('created_at', { ascending: true })
-    .limit(50)
-
-  if (data) memories.value = data
-  if (error) console.error('Error fetching messages:', error)
-  */
-}
-
-// Fetch users (from memories table since we don't have direct user access)
-async function fetchUsers() {
-  // Temporarily disabled - needs migration from Supabase
-  users.value = []
-  return
-  /*
-  const { data, error } = await supabase
-    .from('memories')
-    .select('user_id, created_at')
-    .not('user_id', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(100)
-
-  if (data) {
-    // Get unique users, keeping only the most recent occurrence of each
-    const uniqueUsers = Array.from(
-      new Map(data.map(m => [m.user_id, m])).values()
-    ).map(m => ({ id: m.user_id }))
-
-    users.value = uniqueUsers
-
-    // Set the most recent user as default
-    if (uniqueUsers.length > 0) {
-      selectedUser.value = uniqueUsers[0].id
+// Lightweight inline markdown renderer component (economical) - swap out for a full parser if needed
+const MarkdownRenderer = defineComponent<{ text: string }>({
+  name: 'MarkdownRenderer',
+  props: { text: { type: String, required: true } },
+  setup(props) {
+    return () => {
+      const html = props.text
+        .replace(/`([^`]+)`/g, '<code class="px-1 bg-gray-200 dark:bg-gray-800 rounded text-[12px]">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline text-blue-600 dark:text-blue-400">$1</a>')
+      return h('span', { innerHTML: html })
     }
   }
-  if (error) console.error('Error fetching users:', error)
-  */
+})
+
+// Types
+interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+  tokenCount?: number
+  meta?: Record<string, any>
 }
 
-// Send message
+// State
+const messages = ref<ChatMessage[]>([])
+const newMessage = ref('')
+const isLoading = ref(false)
+const chatWindow = ref<HTMLElement>()
+const textarea = ref<HTMLTextAreaElement>()
+const showTokens = ref(false)
+const metaDetailOpen = ref<Record<string, Set<string>>>({}) // messageId -> set of keys
+
+// Stats store
+const stats = ref({
+  totalAssistantMessages: 0,
+  lastLatencyMs: 0,
+  avgLatencyMs: 0,
+  totalLatencyMs: 0,
+  totalTokens: 0,
+  startedAt: Date.now(),
+  memoryHits: 0,
+  throughputPerMin: 0
+})
+
+// Format time
+function formatTime(timestamp: Date) {
+  return timestamp.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+}
+
+// Scroll to bottom
+async function scrollToBottom() {
+  await nextTick()
+  if (chatWindow.value) {
+    chatWindow.value.scrollTop = chatWindow.value.scrollHeight
+  }
+}
+
+// Auto grow textarea
+watch(newMessage, () => {
+  if (!textarea.value) return
+  textarea.value.style.height = 'auto'
+  textarea.value.style.height = Math.min(textarea.value.scrollHeight, 320) + 'px'
+})
+
+function insertNewline() {
+  newMessage.value += '\n'
+}
+
+function toggleTokens() {
+  showTokens.value = !showTokens.value
+}
+
+function clearChat() {
+  messages.value = []
+  stats.value = { totalAssistantMessages: 0, lastLatencyMs: 0, avgLatencyMs: 0, totalLatencyMs: 0, totalTokens: 0, startedAt: Date.now(), memoryHits: 0, throughputPerMin: 0 }
+}
+
+// Send message to capabilities API
 async function sendMessage() {
-  // Temporarily disabled - needs migration from Supabase
-  /*
-  if (!newMessage.value.trim() || !selectedUser.value) return
+  if (!newMessage.value.trim() || isLoading.value) return
 
-  const memory = {
-    value: newMessage.value,
-    user_id: selectedUser.value,
-    memory_type: 'debug_chat',
-    created_at: new Date().toISOString()
-  }
+  const userMessage = newMessage.value.trim()
 
-  const { error } = await supabase
-    .from('memories')
-    .insert([memory])
-
-  if (error) {
-    console.error('Error sending message:', error)
-    return
-  }
+  // Add user message
+  messages.value.push({
+    id: Date.now().toString() + '-user',
+    role: 'user',
+    content: userMessage,
+    timestamp: new Date()
+  })
 
   newMessage.value = ''
-  */
+  isLoading.value = true
+  await scrollToBottom()
+
+  try {
+    // Call capabilities API directly
+    const response = await fetch('http://localhost:18239/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: userMessage,
+        userId: 'brain-user'
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data.success && data.jobUrl) {
+      // Poll for result
+      await pollForResult(data.jobUrl)
+    } else {
+      throw new Error('Invalid response format')
+    }
+  } catch (error: any) {
+    console.error('Chat error:', error)
+    messages.value.push({
+      id: Date.now().toString() + '-error',
+      role: 'assistant',
+      content: `❌ Error: ${error.message}`,
+      timestamp: new Date()
+    })
+  } finally {
+    isLoading.value = false
+    await scrollToBottom()
+  }
 }
 
-// Subscribe to new messages
-function subscribeToMessages() {
-  // Temporarily disabled - needs migration from Supabase
-  /*
-  supabase
-    .channel('debugchat')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'memories',
-        filter: 'memory_type=eq.debug_chat'
-      },
-      (payload) => {
-        memories.value = [...memories.value, payload.new as Memory]
+// Poll for job completion
+async function pollForResult(jobUrl: string) {
+  const maxAttempts = 30
+  let attempts = 0
+
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch(`http://localhost:18239${jobUrl}`)
+      const data = await response.json()
+
+      if (data.status === 'completed') {
+        const tokenCount = estimateTokens(data.response)
+        const meta = { ...data }
+        delete meta.response
+        messages.value.push({
+          id: Date.now().toString() + '-assistant',
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date(),
+          tokenCount,
+          meta
+        })
+        // Update stats
+        if (meta.processingTime) {
+          stats.value.lastLatencyMs = meta.processingTime
+          stats.value.totalLatencyMs += meta.processingTime
+        }
+        stats.value.totalAssistantMessages += 1
+        stats.value.totalTokens += tokenCount
+        if (meta.memoryCount) stats.value.memoryHits += meta.memoryCount
+        stats.value.avgLatencyMs = stats.value.totalLatencyMs / Math.max(stats.value.totalAssistantMessages, 1)
+        const minutes = (Date.now() - stats.value.startedAt) / 60000
+        stats.value.throughputPerMin = stats.value.totalAssistantMessages / Math.max(minutes, 0.01)
+        break
+      } else if (data.status === 'failed') {
+        throw new Error(data.error || 'Job failed')
       }
-    )
-    .subscribe()
-  */
+
+      // Wait 1 second before next poll
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      attempts++
+    } catch (error: any) {
+      console.error('Polling error:', error)
+      messages.value.push({
+        id: Date.now().toString() + '-poll-error',
+        role: 'assistant',
+        content: `❌ Polling error: ${error.message}`,
+        timestamp: new Date()
+      })
+      break
+    }
+  }
+
+  if (attempts >= maxAttempts) {
+    messages.value.push({
+      id: Date.now().toString() + '-timeout',
+      role: 'assistant',
+      content: '❌ Request timed out',
+      timestamp: new Date()
+    })
+  }
 }
 
-onMounted(() => {
-  fetchUsers()
-  fetchMessages()
-  // subscribeToMessages()
-})
+// Very rough token estimate (4 chars per token heuristic)
+function estimateTokens(text: string) {
+  if (!text) return 0
+  return Math.ceil(text.length / 4)
+}
+
+// Formatting helpers
+function formatMs(ms: number) { return ms < 1000 ? ms + 'ms' : (ms / 1000).toFixed(2) + 's' }
+function pretty(v: any) { try { return typeof v === 'string' ? v : JSON.stringify(v, null, 2) } catch { return String(v) } }
+
+function filteredMeta(meta: Record<string, any>) {
+  const omit = new Set(['success'])
+  const out: Record<string, any> = {}
+  Object.keys(meta || {}).forEach(k => { if (!omit.has(k)) out[k] = meta[k] })
+  return out
+}
+
+function formatMetaValue(val: any) {
+  if (val == null) return 'null'
+  if (typeof val === 'string') return val.length > 22 ? val.slice(0, 22) + '…' : val
+  if (typeof val === 'number') return val
+  if (Array.isArray(val)) return `[${val.length}]`
+  if (typeof val === 'object') return '{…}'
+  return String(val)
+}
+
+function toggleMetaDetail(messageId: string, key: string) {
+  if (!metaDetailOpen.value[messageId]) metaDetailOpen.value[messageId] = new Set()
+  const set = metaDetailOpen.value[messageId]
+  if (set.has(key)) {
+    set.delete(key)
+  } else {
+    set.add(key)
+  }
+  // force reactive update
+  metaDetailOpen.value = { ...metaDetailOpen.value }
+}
+
+function isMetaDetailOpen(messageId: string, key: string) {
+  return !!metaDetailOpen.value[messageId]?.has(key)
+}
 </script>
-
-<style scoped>
-.chat-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-}
-
-.user-select {
-  margin-bottom: 10px;
-}
-
-.chat-window {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  padding: 10px;
-  background-color: #fff;
-}
-
-.chat-bubble {
-  padding: 10px;
-  margin-bottom: 5px;
-  border-radius: 5px;
-  background-color: #e0e0e0;
-}
-
-.chat-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-</style>

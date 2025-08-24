@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 const logs = ref([])
 
 const logClamp = ref(12)

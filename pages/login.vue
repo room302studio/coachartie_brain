@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 const email = ref('')
 
 const signInWithOtp = async () => {

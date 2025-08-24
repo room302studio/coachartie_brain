@@ -184,7 +184,7 @@
 import { ref, computed } from 'vue'
 import { format, formatDistance } from 'date-fns'
 
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 const todos = ref([])
 const showAddForm = ref(false)
 const showFilters = ref(false)

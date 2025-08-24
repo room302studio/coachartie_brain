@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody } from 'h3'
-import { getDatabase } from '@coachartie/shared'
+import sqlite3 from 'sqlite3'
+import { open } from 'sqlite'
 import crypto from 'crypto'
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +15,11 @@ export default defineEventHandler(async (event) => {
       }
     }
     
-    const db = await getDatabase()
+    const dbPath = process.env.DATABASE_PATH || '/Users/ejfox/code/coachartie2/packages/capabilities/data/coachartie.db'
+    const db = await open({
+      filename: dbPath,
+      driver: sqlite3.Database
+    })
     
     // Generate content hash
     const contentHash = crypto.createHash('md5').update(content).digest('hex')
@@ -22,16 +27,14 @@ export default defineEventHandler(async (event) => {
     // Insert memory
     const result = await db.run(
       `INSERT INTO memories (
-        value,
+        content,
         user_id,
-        memory_type,
         tags,
         context,
         importance,
-        content_hash,
         created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [content, user_id || 'anonymous', memory_type, tags, context, importance, contentHash]
+      ) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+      [content, user_id || 'anonymous', tags, context, importance]
     )
     
     // Fetch the inserted memory
@@ -39,6 +42,8 @@ export default defineEventHandler(async (event) => {
       'SELECT * FROM memories WHERE id = ?',
       [result.lastID]
     )
+    
+    await db.close()
     
     return {
       success: true,

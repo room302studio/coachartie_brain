@@ -101,7 +101,7 @@ const selectedUsers = ref<string[]>([])
 const dateFilter = ref('')
 const searchQuery = ref('')
 
-const supabase = useSupabaseClient<Database>()
+const supabase = useDatabase()
 const defaultMessagesToShow = 12
 const messagesToShow = ref(defaultMessagesToShow)
 
@@ -110,13 +110,18 @@ const { animateStaggered } = useStaggeredAnimation()
 
 // Fetch messages data
 async function refreshMessages() {
-  const { data: messagesData, error: messagesError } = await supabase
-    .from('messages')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(messagesToShow.value)
-
-  if (messagesData) messages.value = messagesData
+  try {
+    // Use API endpoint instead of direct Supabase
+    const response = await fetch('/api/messages?limit=' + messagesToShow.value)
+    const data = await response.json()
+    
+    if (data.success && data.data) {
+      messages.value = data.data
+    }
+  } catch (error) {
+    console.error('Failed to fetch messages:', error)
+    messages.value = []
+  }
 
   // Add animation after data is loaded with simplified parameters
   if (messages.value.length > 0) {
@@ -187,19 +192,19 @@ const filteredMessages = computed(() => {
   return filtered.slice(0, messagesToShow.value)
 })
 
-// Subscribe to new messages
-supabase
-  .channel('messagechannel')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'messages' },
-    (payload) => {
-      const newMessages = [payload.new, ...messages.value]
-      const uniqueMessages = Array.from(new Set(newMessages.map(JSON.stringify))).map(JSON.parse)
-      messages.value = uniqueMessages
-    }
-  )
-  .subscribe()
+// Subscribe to new messages - DISABLED (Supabase realtime not configured)
+// supabase
+//   .channel('messagechannel')
+//   .on(
+//     'postgres_changes',
+//     { event: 'INSERT', schema: 'public', table: 'messages' },
+//     (payload) => {
+//       const newMessages = [payload.new, ...messages.value]
+//       const uniqueMessages = Array.from(new Set(newMessages.map(JSON.stringify))).map(JSON.parse)
+//       messages.value = uniqueMessages
+//     }
+//   )
+//   .subscribe()
 
 // Lifecycle
 onMounted(() => {

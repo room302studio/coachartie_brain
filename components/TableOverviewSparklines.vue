@@ -104,7 +104,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import EmbeddableSparkline from '~/components/EmbeddableSparkline.vue'
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 
 // Reactive data
 const queueCreatedData = ref([])

@@ -105,7 +105,7 @@ const selectedUsers = ref([])
 const selectedTypes = ref([])
 const searchQuery = ref('')
 
-// const supabase = useSupabaseClient()
+const supabase = useDatabase()
 const defaultMemoriesToShow = 25
 const memoriesToShow = ref(defaultMemoriesToShow)
 
