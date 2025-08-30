@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
     const contentHash = crypto.createHash('md5').update(content).digest('hex')
     
     // Insert memory
+    const timestamp = new Date().toISOString()
     const result = await db.run(
       `INSERT INTO memories (
         content,
@@ -32,9 +33,10 @@ export default defineEventHandler(async (event) => {
         tags,
         context,
         importance,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-      [content, user_id || 'anonymous', tags, context, importance]
+        created_at,
+        timestamp
+      ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
+      [content, user_id || 'anonymous', tags || '[]', context || '', importance, timestamp]
     )
     
     // Fetch the inserted memory
