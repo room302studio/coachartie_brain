@@ -7,7 +7,7 @@ FROM node:${NODE_VERSION}-slim as build
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./
+COPY packages/brain/package.json packages/brain/package-lock.json ./
 
 # Install dependencies (fix for npm/rollup bug on Linux)
 RUN npm cache clean --force
@@ -15,7 +15,7 @@ RUN npm install nuxt@^3.13.0 --save-dev
 RUN npm install
 
 # Copy source code
-COPY . .
+COPY packages/brain/ .
 
 # Build Nuxt app
 RUN npm run build
