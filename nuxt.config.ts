@@ -4,7 +4,7 @@ import pkg from './package.json'
 export default defineNuxtConfig({
   compatibilityDate: '2025-06-06',
   devServer: {
-    port: 24680, // ⚡ LIGHTSPEED consistent port for debug chat!
+    port: 47325, // ⚡ LIGHTSPEED consistent port for debug chat!
     host: '0.0.0.0'
   },
   app: {
