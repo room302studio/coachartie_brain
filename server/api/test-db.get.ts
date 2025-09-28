@@ -3,7 +3,7 @@ import path from 'path'
 import fs from 'fs'
 
 export default defineEventHandler(async (event) => {
-  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'coachartie.db')
+  const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
   
   return {
     cwd: process.cwd(),

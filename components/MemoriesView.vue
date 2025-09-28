@@ -58,7 +58,10 @@
     <!-- Memories list -->
     <div class="space-y-0.5 max-h-[calc(100vh-250px)] overflow-y-auto">
       <div v-for="memory in filteredMemories" :key="memory.id"
-        class="border-b border-gray-300 dark:border-black mb-0.5 hover:bg-gray-100 dark:hover:bg-gray-900">
+        class="border-b border-gray-300 dark:border-black mb-0.5 hover:bg-gray-100 dark:hover:bg-gray-900"
+        :data-memory-id="memory.id"
+        :data-related-message-id="memory.related_message_id"
+        :data-user-id="memory.user_id">
         <div class="flex items-center justify-between border-b border-gray-300 dark:border-black p-0.5">
           <div class="flex items-center">
             <span class="text-[10px] text-gray-900 dark:text-white font-medium">[{{ memory.user_id || 'SYSTEM'
@@ -73,7 +76,7 @@
 
         <div class="p-0.5">
           <pre
-            class="text-[10px] text-gray-900 dark:text-white border-b border-gray-300 dark:border-black p-0.5 whitespace-pre-wrap break-words">{{ memory.value }}</pre>
+            class="text-[10px] text-gray-900 dark:text-white border-b border-gray-300 dark:border-black p-0.5 whitespace-pre-wrap break-words">{{ memory.content || memory.value }}</pre>
 
           <div class="flex justify-between mt-0.5 text-[10px] text-gray-500 dark:text-gray-400 flex flex-wrap gap-x-2">
             <div>
@@ -96,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { format } from 'date-fns'
 
 const memories = ref([])
@@ -105,23 +108,34 @@ const selectedUsers = ref([])
 const selectedTypes = ref([])
 const searchQuery = ref('')
 
-const supabase = useDatabase()
 const defaultMemoriesToShow = 25
 const memoriesToShow = ref(defaultMemoriesToShow)
 
 // Fetch memories data
 async function refreshMemories() {
-  const { data: memoriesData, error: memoriesError } = await supabase
-    .from('memories')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(100)
+  try {
+    // Use API endpoint instead of direct Supabase
+    const response = await fetch('/api/memories?limit=100')
+    const data = await response.json()
 
-  if (memoriesData) memories.value = memoriesData
+    console.log('Memories API response:', data)
+
+    if (data.success && data.data) {
+      memories.value = data.data
+      console.log('Loaded memories:', memories.value.length)
+    } else {
+      console.error('Invalid response structure:', data)
+    }
+  } catch (error) {
+    console.error('Failed to fetch memories:', error)
+    memories.value = []
+  }
 }
 
-// Initial fetch
-refreshMemories()
+// Initial fetch on mount
+onMounted(() => {
+  refreshMemories()
+})
 
 // Get unique users
 const uniqueUsers = computed(() => {
@@ -161,27 +175,19 @@ const filteredMemories = computed(() => {
   // Filter by search query
   if (searchQuery.value.trim() !== '') {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(memory =>
-      memory.value.toLowerCase().includes(query) ||
-      (memory.user_id && memory.user_id.toLowerCase().includes(query)) ||
-      (memory.type && memory.type.toLowerCase().includes(query))
-    )
+    filtered = filtered.filter(memory => {
+      const memoryContent = (memory.content || memory.value || '').toLowerCase()
+      return memoryContent.includes(query) ||
+        (memory.user_id && memory.user_id.toLowerCase().includes(query)) ||
+        (memory.type && memory.type.toLowerCase().includes(query))
+    })
   }
 
   return filtered.slice(0, memoriesToShow.value)
 })
 
-// Subscribe to new memories
-supabase
-  .channel('memorychannel')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'memories' },
-    (payload) => {
-      memories.value = [payload.new, ...memories.value]
-    }
-  )
-  .subscribe()
+// Subscribe to new memories - disabled for now
+// TODO: Implement WebSocket/Redis real-time updates
 </script>
 
 <style scoped>

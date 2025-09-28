@@ -690,8 +690,8 @@ export async function getBrainDatabase(): Promise<Database<sqlite3.Database, sql
   }
 
   try {
-    // Use absolute path to the database file
-    const dbPath = '/Users/ejfox/code/coachartie2/packages/capabilities/data/coachartie.db';
+    // Use environment variable or fallback to container path
+    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db';
     
     db = await open({
       filename: dbPath,

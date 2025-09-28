@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     const limit = query.limit ? parseInt(query.limit as string) : 100
     const userId = query.user_id as string || null
     
-    const dbPath = process.env.DATABASE_PATH || '/Users/ejfox/code/coachartie2/packages/capabilities/data/coachartie.db'
+    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
     const db = await open({
       filename: dbPath,
       driver: sqlite3.Database

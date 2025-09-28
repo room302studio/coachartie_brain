@@ -7,12 +7,15 @@
       </div>
 
       <!-- Main Content -->
-      <div class="flex-1 p-4">
+      <div class="flex-1 p-4 relative">
         <div class="mb-2 border-b border-gray-300 dark:border-black pb-1">
           <span class="text-base font-medium text-gray-900 dark:text-white">DASHBOARD</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <!-- Connection Layer for visual links between messages and memories -->
+        <ConnectionLayer />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 relative z-10">
           <!-- Messages and Latest Log -->
           <div>
             <div
@@ -54,7 +57,7 @@
 
         <!-- Network Graph Section -->
         <div
-          class="mt-2 border border-gray-300 dark:border-black dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
+          class="mt-2 border border-gray-300 dark:border-black dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none relative z-10">
           <div class="section-title">NETWORK GRAPH</div>
           <div class="p-2">
             <NetworkGraph />
@@ -73,6 +76,7 @@ import MemoriesView from '~/components/MemoriesView.vue'
 import LatestLog from '~/components/LatestLog.vue'
 import TableOverviewSparklines from '~/components/TableOverviewSparklines.vue'
 import NetworkGraph from '~/components/NetworkGraph.vue'
+import ConnectionLayer from '~/components/ConnectionLayer.vue'
 import { useStaggeredAnimation } from '~/composables/useStaggeredAnimation'
 
 // Define the layout to use

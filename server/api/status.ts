@@ -52,7 +52,7 @@ interface StatusData extends TimeSeriesData, MemoryDistributions {
  */
 export default defineEventHandler(async (event) => {
   try {
-    const dbPath = process.env.DATABASE_PATH || '/Users/ejfox/code/coachartie2/packages/capabilities/data/coachartie.db'
+    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
     const db = await open({
       filename: dbPath,
       driver: sqlite3.Database

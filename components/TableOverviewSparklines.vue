@@ -146,41 +146,43 @@ function getLast24HourTimestamps() {
 // Fetch and aggregate data
 async function fetchData() {
   try {
-    // Get total counts first
-    const countPromises = [
-      supabase.from('queue').select('id', { count: 'exact', head: true }),
-      supabase.from('messages').select('id', { count: 'exact', head: true })
-    ]
-    
-    const [queueCountResult, messageCountResult] = await Promise.all(countPromises)
-    
-    // Update total counts
-    totalQueueCount.value = queueCountResult.count || 0
-    totalMessageCount.value = messageCountResult.count || 0
-    
-    // Queue data - Get last 100 entries for processing
-    const { data: qData, error: qError } = await supabase
-      .from('queue')
-      .select('id, created_at, completed_at, error_message, status')
-      .order('created_at', { ascending: false })
-      .limit(100)
-    
-    if (qError) throw qError
-    queueData.value = qData || []
-    
-    // Messages data - Get last 100 entries for processing
-    const { data: mData, error: mError } = await supabase
-      .from('messages')
-      .select('id, created_at, message_type')
-      .order('created_at', { ascending: false })
-      .limit(100)
-    
-    if (mError) throw mError
-    messagesData.value = mData || []
-    
-    // Process data
-    processQueueData()
-    processMessageData()
+    // Get status counts from API
+    const statusResponse = await fetch('/api/status')
+    const statusData = await statusResponse.json()
+
+    if (statusData) {
+      // Update total counts
+      totalQueueCount.value = statusData.queueCount || 0
+      totalMessageCount.value = statusData.messageCount || 0
+
+      // Use the chart data provided by the status endpoint
+      queueCreatedData.value = statusData.queueCompletedData || []
+      queueCompletedData.value = statusData.queueCompletedData || []
+      queueErrorData.value = statusData.queueErrorData || []
+      messagesCreatedData.value = statusData.messagesCreatedData || []
+    } else {
+      // Fallback: Try to fetch individual data
+      const [queueResponse, messagesResponse] = await Promise.all([
+        fetch('/api/queue/status'),
+        fetch('/api/messages?limit=100')
+      ])
+
+      if (queueResponse.ok) {
+        const queueResult = await queueResponse.json()
+        queueData.value = queueResult.data || []
+        totalQueueCount.value = queueResult.count || queueData.value.length
+      }
+
+      if (messagesResponse.ok) {
+        const messagesResult = await messagesResponse.json()
+        messagesData.value = messagesResult.data || []
+        totalMessageCount.value = messagesResult.count || messagesData.value.length
+      }
+
+      // Process data locally if we fetched it
+      if (queueData.value.length > 0) processQueueData()
+      if (messagesData.value.length > 0) processMessageData()
+    }
   } catch (error) {
     console.error('Error fetching data:', error)
     // Use sample data if fetch fails

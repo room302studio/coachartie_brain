@@ -175,18 +175,19 @@ async function refreshData() {
 
 async function fetchMemories() {
   try {
-    const { data, error } = await supabase
-      .from('memories')
-      .select('id, value, user_id, related_message_id, memory_type, conversation_id, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50)
+    const response = await fetch('/api/memories?limit=50')
+    const result = await response.json()
 
-    if (error) {
-      console.error('Error fetching memories:', error)
-      return []
+    if (result.success && result.data) {
+      // Map the data to include value field for consistency
+      return result.data.map(memory => ({
+        ...memory,
+        value: memory.content || memory.value || ''
+      }))
     }
 
-    return data || []
+    console.error('Error fetching memories:', result.error)
+    return []
   } catch (error) {
     console.error('Exception fetching memories:', error)
     return []
@@ -195,18 +196,19 @@ async function fetchMemories() {
 
 async function fetchMessages() {
   try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('id, content, value, user_id, message_type, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50)
+    const response = await fetch('/api/messages?limit=50')
+    const result = await response.json()
 
-    if (error) {
-      console.error('Error fetching messages:', error)
-      return []
+    if (result.success && result.data) {
+      // Map the data to include content field for consistency
+      return result.data.map(message => ({
+        ...message,
+        content: message.value || message.content || ''
+      }))
     }
 
-    return data || []
+    console.error('Error fetching messages:', result.error)
+    return []
   } catch (error) {
     console.error('Exception fetching messages:', error)
     return []
@@ -215,26 +217,22 @@ async function fetchMessages() {
 
 async function fetchUsers() {
   try {
-    // Get unique users from memories and messages
-    const { data: memoryUsers, error: memoryError } = await supabase
-      .from('memories')
-      .select('user_id')
-      .not('user_id', 'is', null)
-      .limit(40)
+    // Get unique users from memories and messages via API
+    const [memoriesResponse, messagesResponse] = await Promise.all([
+      fetch('/api/memories?limit=40'),
+      fetch('/api/messages?limit=40')
+    ])
 
-    const { data: messageUsers, error: messageError } = await supabase
-      .from('messages')
-      .select('user_id')
-      .not('user_id', 'is', null)
-      .limit(40)
+    const [memoriesData, messagesData] = await Promise.all([
+      memoriesResponse.json(),
+      messagesResponse.json()
+    ])
 
-    if (memoryError || messageError) {
-      console.error('Error fetching users:', memoryError || messageError)
-      return []
-    }
+    const memoryUsers = memoriesData.success && memoriesData.data ? memoriesData.data : []
+    const messageUsers = messagesData.success && messagesData.data ? messagesData.data : []
 
     // Combine and deduplicate users
-    const allUsers = [...(memoryUsers || []), ...(messageUsers || [])]
+    const allUsers = [...memoryUsers, ...messageUsers]
     const uniqueUserIds = [...new Set(allUsers.map(u => u.user_id).filter(Boolean))]
 
     return uniqueUserIds.map(id => ({ id }))

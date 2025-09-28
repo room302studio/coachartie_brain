@@ -306,8 +306,12 @@ async function fetchStats() {
 // Check database connection
 async function checkConnectionStatus() {
   try {
-    const { data, error } = await supabase.from('memories').select('id').limit(1)
-    connectionStatus.value = error ? 'disconnected' : 'connected'
+    const response = await fetch('/api/status')
+    if (response.ok) {
+      connectionStatus.value = 'connected'
+    } else {
+      connectionStatus.value = 'disconnected'
+    }
   } catch (e) {
     connectionStatus.value = 'disconnected'
   }
@@ -316,15 +320,16 @@ async function checkConnectionStatus() {
 // Determine system status based on queue
 async function determineSystemStatus() {
   try {
-    const { data, error } = await supabase
-      .from('queue')
-      .select('status')
-      .eq('status', 'processing')
-      .limit(1)
+    const response = await fetch('/api/queue/status')
+    const result = await response.json()
 
-    if (error) throw error
-
-    systemStatus.value = data && data.length > 0 ? 'busy' : 'ready'
+    if (result.success && result.data) {
+      // Check if there are any processing items
+      const processingItems = result.data.filter(item => item.status === 'processing')
+      systemStatus.value = processingItems.length > 0 ? 'busy' : 'ready'
+    } else {
+      systemStatus.value = 'ready'
+    }
   } catch (err) {
     console.error('Error checking system status:', err)
     systemStatus.value = 'error'

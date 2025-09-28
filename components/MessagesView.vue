@@ -1,96 +1,88 @@
 <template>
   <div class="font-mono text-gray-900 dark:text-white">
     <!-- Header with controls -->
-    <div class="flex items-center justify-between mb-1 border-b border-gray-300 dark:border-black pb-0.5">
-      <div class="flex items-center">
+    <div class="flex items-center justify-between mb-1 border-b border-gray-300 dark:border-gray-800 pb-0.5">
+      <div class="flex items-center gap-2">
         <button @click="refreshMessages"
-          class="text-[10px] text-gray-700 dark:text-white font-mono mr-1 border-r border-gray-300 dark:border-black px-0.5 hover:text-gray-900 dark:hover:text-gray-300"
+          class="text-[9px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           aria-label="Refresh messages">
           [REFRESH]
         </button>
+        <span class="text-[9px] text-gray-500 dark:text-gray-500">|</span>
         <button @click="showFilters = !showFilters"
-          class="text-[10px] text-gray-700 dark:text-white font-mono mr-1 border-r border-gray-300 dark:border-black px-0.5 hover:text-gray-900 dark:hover:text-gray-300">
-          [{{ showFilters ? 'HIDE_FILTER' : 'FILTER' }}]
+          class="text-[9px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          [{{ showFilters ? 'HIDE' : 'FILTER' }}]
         </button>
-        <span class="text-[10px] text-gray-700 dark:text-white">[{{ filteredMessages.length }}]</span>
+        <span class="text-[9px] text-gray-500 dark:text-gray-500">|</span>
+        <span class="text-[9px] font-bold text-gray-700 dark:text-gray-300">{{ filteredMessages.length }} MSGS</span>
       </div>
-      <div>
-        <button @click="messagesToShow = 10" class="text-[10px] text-gray-700 dark:text-white font-mono px-0.5"
-          :class="messagesToShow === 10 ? 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white' : ''">
-          10
-        </button>
-        <button @click="messagesToShow = 25" class="text-[10px] text-gray-700 dark:text-white font-mono px-0.5"
-          :class="messagesToShow === 25 ? 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white' : ''">
-          25
-        </button>
-        <button @click="messagesToShow = 50" class="text-[10px] text-gray-700 dark:text-white font-mono px-0.5"
-          :class="messagesToShow === 50 ? 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white' : ''">
-          50
+      <div class="flex items-center gap-1">
+        <button v-for="count in [16, 32, 64, 128]" :key="count"
+          @click="messagesToShow = count"
+          class="text-[9px] px-1 transition-colors"
+          :class="messagesToShow === count
+            ? 'text-black dark:text-white font-bold border-b border-black dark:border-white'
+            : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+          {{ count }}
         </button>
       </div>
     </div>
 
     <!-- Filters -->
-    <div v-if="showFilters" class="border-b border-gray-300 dark:border-black p-1 mb-1">
-      <div class="grid grid-cols-1 gap-1">
-        <div>
-          <label class="text-[10px] text-gray-700 dark:text-white mb-0.5 block">USERS:</label>
-          <select v-model="selectedUsers" multiple
-            class="w-full text-[10px] text-gray-900 dark:text-white bg-transparent border-b border-gray-300 dark:border-black p-0.5">
-            <option v-for="user in uniqueUsers" :key="user" :value="user">{{ user }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-[10px] text-gray-700 dark:text-white mb-0.5 block">SEARCH:</label>
-          <input v-model="searchQuery" placeholder="Search messages"
-            class="w-full text-[10px] text-gray-900 dark:text-white bg-transparent border-b border-gray-300 dark:border-black p-0.5" />
-        </div>
+    <div v-if="showFilters" class="border-b border-gray-200 dark:border-gray-800 p-1 mb-1 bg-gray-50 dark:bg-gray-950">
+      <div class="flex gap-2">
+        <input v-model="searchQuery"
+          placeholder="Search messages..."
+          class="flex-1 text-[9px] text-gray-900 dark:text-white bg-transparent border border-gray-300 dark:border-gray-700 px-1 py-0.5 focus:outline-none focus:border-blue-500" />
+        <select v-model="selectedUsers" multiple
+          class="text-[9px] text-gray-900 dark:text-white bg-transparent border border-gray-300 dark:border-gray-700 px-1 max-w-[150px]">
+          <option v-for="user in uniqueUsers" :key="user" :value="user">{{ user }}</option>
+        </select>
       </div>
     </div>
 
-    <!-- Messages list -->
-    <div class="space-y-0.5 max-h-[calc(100vh-250px)] overflow-y-auto">
-      <div v-for="message in filteredMessages" :key="message.id"
-        class="border-b border-gray-300 dark:border-black mb-0.5 hover:bg-gray-100 dark:hover:bg-gray-900 message-item">
-        <div class="flex items-center justify-between border-b border-gray-300 dark:border-black p-0.5">
-          <div class="flex items-center">
-            <span class="text-[10px] text-gray-900 dark:text-white font-medium">[{{ message.user_id || 'SYSTEM'
-            }}]</span>
-            <span v-if="message.role" class="text-[10px] text-gray-700 dark:text-gray-300 ml-1">({{ message.role
-            }})</span>
-          </div>
-          <div class="text-[10px] text-gray-700 dark:text-white">
-            {{ formatDate(message.created_at) }}
-          </div>
-        </div>
+    <!-- Messages list - data dense layout -->
+    <div class="max-h-[calc(100vh-280px)] overflow-y-auto overflow-x-hidden">
+      <div v-for="(message, idx) in filteredMessages" :key="message.id"
+        class="message-item border-b border-gray-200 dark:border-gray-900"
+        :data-message-id="message.id"
+        :data-memory-id="message.memory_id"
+        :data-user-id="message.user_id">
 
-        <div class="p-0.5">
-          <pre
-            class="text-[10px] text-gray-900 dark:text-white border-b border-gray-300 dark:border-black p-0.5 whitespace-pre-wrap break-words">{{ message.value }}</pre>
+        <!-- Single line layout -->
+        <div class="flex items-start gap-2 px-1 py-1">
+          <!-- Timestamp -->
+          <span class="text-[8px] text-gray-400 dark:text-gray-600 font-mono whitespace-nowrap mt-0.5">
+            {{ formatTime(message.created_at) }}
+          </span>
 
-          <div class="flex justify-between mt-0.5 text-[10px] text-gray-500 dark:text-gray-400 flex flex-wrap gap-x-2">
-            <div>
-              <span>CONV:{{ message.conversation_id || 'NONE' }}</span>
-              <span v-if="message.memory_id" class="ml-1">
-                MEM:{{ message.memory_id }}
-              </span>
-            </div>
+          <!-- User badge with color -->
+          <span class="text-[9px] font-bold px-1 whitespace-nowrap"
+            :style="{
+              color: getUserColor(message.user_id),
+            }">
+            [{{ message.user_id || 'SYSTEM' }}]
+          </span>
+
+          <!-- Message content - takes remaining space -->
+          <div class="text-[10px] leading-relaxed text-gray-900 dark:text-gray-100 flex-1">
+            {{ message.value }}
           </div>
         </div>
       </div>
 
       <!-- Empty state -->
       <div v-if="filteredMessages.length === 0"
-        class="text-center py-2 border-b border-dashed border-gray-300 dark:border-black">
-        <span class="text-[10px] text-gray-700 dark:text-white">NO_MESSAGES_FOUND</span>
+        class="text-center py-4">
+        <span class="text-[10px] text-gray-500 dark:text-gray-500">NO_MESSAGES_FOUND</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { format, formatDistance } from 'date-fns'
-import { useStaggeredAnimation } from '~/composables/useStaggeredAnimation'
 import type { Database, Tables } from '~/database.types'
 
 type Message = Tables<'messages'>
@@ -98,23 +90,66 @@ type Message = Tables<'messages'>
 const messages = ref<Message[]>([])
 const showFilters = ref(false)
 const selectedUsers = ref<string[]>([])
-const dateFilter = ref('')
 const searchQuery = ref('')
 
-const supabase = useDatabase()
-const defaultMessagesToShow = 12
+// Changed default from 12 to 32
+const defaultMessagesToShow = 32
 const messagesToShow = ref(defaultMessagesToShow)
 
-// Animation setup
-const { animateStaggered } = useStaggeredAnimation()
+// D3 Turbo color scale sampled at 12 points for categorical use
+// Turbo goes from dark blue -> cyan -> green -> yellow -> orange -> red
+const userColorPalette = [
+  '#30123b', // deep purple-blue
+  '#4145ab', // blue
+  '#4675ed', // bright blue
+  '#3f9bff', // cyan-blue
+  '#1bcfd4', // cyan
+  '#24ed98', // cyan-green
+  '#61fc6c', // bright green
+  '#a4fc3b', // yellow-green
+  '#d1e834', // yellow
+  '#faba39', // orange-yellow
+  '#fb7022', // orange
+  '#e93725', // red-orange
+  '#ca2a04', // deep red
+  '#7a0403', // dark red
+]
 
-// Fetch messages data
+// Cache for user colors
+const userColorCache = new Map<string, string>()
+
+// Get consistent color for a user
+function getUserColor(userId: string, opacity: number = 1): string {
+  if (!userId) return opacity < 1 ? `rgba(128, 128, 128, ${opacity})` : '#808080'
+
+  if (!userColorCache.has(userId)) {
+    // Generate a consistent index based on user ID
+    const hash = userId.split('').reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc)
+    }, 0)
+    const colorIndex = Math.abs(hash) % userColorPalette.length
+    userColorCache.set(userId, userColorPalette[colorIndex])
+  }
+
+  const color = userColorCache.get(userId)!
+  if (opacity < 1) {
+    // Convert hex to rgba
+    const r = parseInt(color.slice(1, 3), 16)
+    const g = parseInt(color.slice(3, 5), 16)
+    const b = parseInt(color.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  }
+  return color
+}
+
+// Fetch messages data - now fetches more by default
 async function refreshMessages() {
   try {
-    // Use API endpoint instead of direct Supabase
-    const response = await fetch('/api/messages?limit=' + messagesToShow.value)
+    // Fetch more messages to have a buffer
+    const limit = Math.max(messagesToShow.value, 100)
+    const response = await fetch('/api/messages?limit=' + limit)
     const data = await response.json()
-    
+
     if (data.success && data.data) {
       messages.value = data.data
     }
@@ -122,113 +157,82 @@ async function refreshMessages() {
     console.error('Failed to fetch messages:', error)
     messages.value = []
   }
-
-  // Add animation after data is loaded with simplified parameters
-  if (messages.value.length > 0) {
-    setTimeout(() => {
-      animateStaggered('.message-item', {
-        translateY: true
-      })
-    }, 50)
-  }
 }
-
-// Initial fetch
-refreshMessages()
 
 // Get unique users
 const uniqueUsers = computed(() => {
-  const users = messages.value.map(message => message.user_id)
+  const users = messages.value.map(message => message.user_id).filter(Boolean)
   return [...new Set(users)]
 })
 
-// Format date
-function formatDate(timestamp) {
-  return format(new Date(timestamp), 'MM-dd-yy')
+// Format time (more compact)
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
+  if (diffHours < 24) {
+    return format(date, 'HH:mm:ss')
+  } else if (diffHours < 168) { // Less than a week
+    return format(date, 'EEE HH:mm')
+  } else {
+    return format(date, 'MM/dd HH:mm')
+  }
 }
 
-// Format time
-function formatTime(timestamp) {
-  return format(new Date(timestamp), 'HH:mm:ss')
-}
-
-// Format time ago
-function formatTimeAgo(timestamp) {
-  return formatDistance(new Date(timestamp), new Date(), { addSuffix: true })
-}
-
-// Filtered messages based on selected users
+// Filtered messages based on filters
 const filteredMessages = computed(() => {
   let filtered = messages.value
 
-  // Filter by selected users if any are selected
+  // Filter by selected users
   if (selectedUsers.value.length > 0) {
     filtered = filtered.filter(message =>
       selectedUsers.value.includes(message.user_id)
     )
   }
 
-  // Apply date filter if specified
-  if (dateFilter.value.toLowerCase().includes('last')) {
-    const match = dateFilter.value.match(/last\s+(\d+)\s+days?/i)
-    if (match && match[1]) {
-      const days = parseInt(match[1])
-      const cutoff = new Date()
-      cutoff.setDate(cutoff.getDate() - days)
-
-      filtered = filtered.filter(message =>
-        new Date(message.created_at) >= cutoff
-      )
-    }
-  }
-
-  // Apply search query if specified
+  // Apply search query
   if (searchQuery.value.length > 0) {
+    const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(message =>
-      message.value.toLowerCase().includes(searchQuery.value.toLowerCase())
+      message.value?.toLowerCase().includes(query) ||
+      message.user_id?.toLowerCase().includes(query) ||
+      message.channel_id?.toLowerCase().includes(query)
     )
   }
 
   return filtered.slice(0, messagesToShow.value)
 })
 
-// Subscribe to new messages - DISABLED (Supabase realtime not configured)
-// supabase
-//   .channel('messagechannel')
-//   .on(
-//     'postgres_changes',
-//     { event: 'INSERT', schema: 'public', table: 'messages' },
-//     (payload) => {
-//       const newMessages = [payload.new, ...messages.value]
-//       const uniqueMessages = Array.from(new Set(newMessages.map(JSON.stringify))).map(JSON.parse)
-//       messages.value = uniqueMessages
-//     }
-//   )
-//   .subscribe()
+// Watch for changes to messagesToShow
+watch(messagesToShow, () => {
+  refreshMessages()
+})
 
 // Lifecycle
 onMounted(() => {
   refreshMessages()
 
-  // ... existing onMounted logic ...
+  // Refresh periodically for real-time feel
+  const interval = setInterval(refreshMessages, 30000) // Every 30 seconds
+
+  onUnmounted(() => {
+    clearInterval(interval)
+  })
 })
 </script>
 
 <style scoped>
-/* Stripped down to only essential styles */
-
-/* Hide message items initially */
-.message-item {
-  opacity: 0;
+/* Custom scrollbar for messages */
+::-webkit-scrollbar {
+  width: 4px;
 }
 
-.hover\:bg-gray-100:hover {
-  background-color: rgba(249, 249, 249, 0.5);
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-900;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dark\:hover\:bg-gray-900:hover {
-    background-color: #111;
-  }
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-600;
 }
 </style>

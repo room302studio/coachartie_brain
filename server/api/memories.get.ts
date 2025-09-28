@@ -8,14 +8,14 @@ export default defineEventHandler(async (event) => {
     const limit = query.limit ? parseInt(query.limit as string) : 100
     const userId = query.user_id as string || null
     
-    const dbPath = process.env.DATABASE_PATH || '/Users/ejfox/code/coachartie2/packages/capabilities/data/coachartie.db'
+    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
     const db = await open({
       filename: dbPath,
       driver: sqlite3.Database
     })
     
     let sql = `
-      SELECT 
+      SELECT
         id,
         content,
         user_id,
@@ -23,7 +23,8 @@ export default defineEventHandler(async (event) => {
         tags,
         context,
         importance,
-        timestamp
+        timestamp,
+        related_message_id
       FROM memories
       ORDER BY created_at DESC
       LIMIT ?
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
     
     if (userId) {
       sql = `
-        SELECT 
+        SELECT
           id,
           content,
           user_id,
@@ -41,7 +42,8 @@ export default defineEventHandler(async (event) => {
           tags,
           context,
           importance,
-          timestamp
+          timestamp,
+          related_message_id
         FROM memories
         WHERE user_id = ?
         ORDER BY created_at DESC
