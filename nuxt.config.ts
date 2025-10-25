@@ -25,6 +25,9 @@ export default defineNuxtConfig({
       if (config.define) {
         config.define['chunkErrorEvent'] = 'undefined'
       }
+    },
+    'nitro:init': (nitro) => {
+      nitro.options.prerender = { enable: false }
     }
   },
   ssr: false, // for netlify deploy
@@ -32,7 +35,6 @@ export default defineNuxtConfig({
   modules: [
     '@vueuse/nuxt',
     '@nuxt/ui',
-    '@nuxt/content',
     [
       '@nuxtjs/google-fonts',
       {
@@ -42,14 +44,18 @@ export default defineNuxtConfig({
       }
     ]
   ],
-  content: {
-    documentDriven: true
-  },
   runtimeConfig: {
     // add the openai api key to the runtime config
     public: {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       PRODUCTION: process.env.PRODUCTION
+    }
+  },
+  nitro: {
+    prerender: false,
+    static: false,
+    experimental: {
+      openPayloadExtraction: false
     }
   }
 })
