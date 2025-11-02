@@ -1,5 +1,5 @@
-import Redis from 'ioredis'
 import { Queue } from 'bullmq'
+import { createRedisConnection } from '@coachartie/shared'
 
 const QUEUES = {
   INCOMING_MESSAGES: 'incoming-messages',
@@ -10,12 +10,7 @@ const QUEUES = {
 
 export default defineEventHandler(async (event) => {
   try {
-    const redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      db: parseInt(process.env.REDIS_DB || '0')
-    })
+    const redis = createRedisConnection()
 
     const queueStats = []
     const recentJobs = []
@@ -90,7 +85,7 @@ export default defineEventHandler(async (event) => {
     const memoryMatch = redisInfo.match(/used_memory_human:(.+)/)
     const memoryUsage = memoryMatch ? memoryMatch[1].trim() : 'N/A'
 
-    await redis.disconnect()
+    // Don't disconnect - we're using a shared connection
 
     return {
       queues: queueStats,

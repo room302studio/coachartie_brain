@@ -1,10 +1,10 @@
-import Redis from 'ioredis'
 import { Queue } from 'bullmq'
+import { createRedisConnection } from '@coachartie/shared'
 
 export default defineEventHandler(async (event) => {
   try {
     const queueName = getRouterParam(event, 'queue')
-    
+
     if (!queueName) {
       throw createError({
         statusCode: 400,
@@ -12,12 +12,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      db: parseInt(process.env.REDIS_DB || '0')
-    })
+    const redis = createRedisConnection()
 
     const queue = new Queue(queueName, { connection: redis })
     
@@ -27,7 +22,7 @@ export default defineEventHandler(async (event) => {
     await queue.clean(0, 1000, 'active')
     await queue.clean(0, 1000, 'waiting')
 
-    await redis.disconnect()
+    // Don't disconnect - we're using a shared connection
 
     return {
       success: true,
