@@ -29,9 +29,9 @@ export default defineEventHandler(async (event) => {
       ORDER BY created_at DESC
       LIMIT ?
     `
-    
+
     const params = [limit]
-    
+
     if (userId) {
       sql = `
         SELECT

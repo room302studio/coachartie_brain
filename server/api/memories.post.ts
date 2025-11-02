@@ -6,24 +6,24 @@ import crypto from 'crypto'
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { content, user_id, memory_type = 'general', tags, context, importance = 5 } = body
-    
+    const { content, user_id, memory_type = 'general', tags, context, importance = 5, related_message_id } = body
+
     if (!content) {
       return {
         success: false,
         error: 'Content is required'
       }
     }
-    
+
     const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
     const db = await open({
       filename: dbPath,
       driver: sqlite3.Database
     })
-    
+
     // Generate content hash
     const contentHash = crypto.createHash('md5').update(content).digest('hex')
-    
+
     // Insert memory
     const timestamp = new Date().toISOString()
     const result = await db.run(
@@ -34,9 +34,10 @@ export default defineEventHandler(async (event) => {
         context,
         importance,
         created_at,
-        timestamp
-      ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
-      [content, user_id || 'anonymous', tags || '[]', context || '', importance, timestamp]
+        timestamp,
+        related_message_id
+      ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
+      [content, user_id || 'anonymous', tags || '[]', context || '', importance, timestamp, related_message_id || null]
     )
     
     // Fetch the inserted memory
