@@ -10,7 +10,7 @@ WORKDIR /build
 RUN npm install -g pnpm
 
 # Copy root workspace files
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.json ./
 
 # Copy brain package files
 COPY packages/brain/package.json ./packages/brain/
