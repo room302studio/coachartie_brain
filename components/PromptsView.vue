@@ -361,9 +361,6 @@ watch([selectedHistoryEntry, wordDiff], () => {
 // Animation setup
 const { animateStaggered } = useStaggeredAnimation()
 
-// Supabase client
-const supabase = useDatabase()
-
 // Format date
 function formatDate(timestamp) {
   if (!timestamp) return 'N/A'
@@ -391,15 +388,10 @@ function getHistoryCount(prompt) {
 const refreshPrompts = async () => {
   loading.value = true
   try {
-    const { data, error } = await supabase
-      .from('prompts')
-      .select('*')
-      .order('updated_at', { ascending: false })
+    const response = await $fetch('/api/prompts')
 
-    if (error) throw error
-
-    if (data) {
-      promptsData.value = data
+    if (response.success && response.data) {
+      promptsData.value = response.data
       // Re-trigger animation after a short delay to ensure DOM has updated
       setTimeout(() => {
         animateStaggered('.prompt-item', {
@@ -407,6 +399,8 @@ const refreshPrompts = async () => {
           translateY: [10, 0]
         })
       }, 50)
+    } else {
+      throw new Error(response.error || 'Failed to fetch prompts')
     }
   } catch (err) {
     console.error('Error fetching prompts:', err)
@@ -530,19 +524,24 @@ async function savePrompt() {
 
     if (promptData.id) {
       // Update existing prompt
-      const { error } = await supabase
-        .from('prompts')
-        .update(promptData)
-        .eq('id', promptData.id)
+      const response = await $fetch('/api/prompts', {
+        method: 'PUT',
+        body: promptData
+      })
 
-      if (error) throw error
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update prompt')
+      }
     } else {
       // Insert new prompt
-      const { error } = await supabase
-        .from('prompts')
-        .insert([promptData])
+      const response = await $fetch('/api/prompts', {
+        method: 'POST',
+        body: promptData
+      })
 
-      if (error) throw error
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to create prompt')
+      }
     }
 
     // Refresh prompts and exit edit mode
@@ -556,12 +555,17 @@ async function savePrompt() {
 // Toggle archived state
 async function toggleArchived(prompt) {
   try {
-    const { error } = await supabase
-      .from('prompts')
-      .update({ archived: !prompt.archived })
-      .eq('id', prompt.id)
+    const response = await $fetch('/api/prompts', {
+      method: 'PUT',
+      body: {
+        ...prompt,
+        archived: !prompt.archived
+      }
+    })
 
-    if (error) throw error
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to toggle archived state')
+    }
 
     // Update local state
     await refreshPrompts()
@@ -575,12 +579,14 @@ async function deletePrompt(id) {
   if (!confirm('Are you sure you want to delete this prompt?')) return
 
   try {
-    const { error } = await supabase
-      .from('prompts')
-      .delete()
-      .eq('id', id)
+    const response = await $fetch('/api/prompts', {
+      method: 'DELETE',
+      body: { id }
+    })
 
-    if (error) throw error
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete prompt')
+    }
 
     // Refresh prompts
     await refreshPrompts()
