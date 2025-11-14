@@ -35,6 +35,11 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Create data directory for database persistence
 RUN mkdir -p /app/data && chmod 755 /app/data
 
+# Create non-root user and set ownership
+RUN groupadd -g 1000 artie && \
+    useradd -r -u 1000 -g artie artie && \
+    chown -R artie:artie /app
+
 # Set environment variables
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
@@ -43,7 +48,10 @@ ENV DATABASE_PATH=/app/data/coachartie.db
 ENV PRODUCTION=true
 
 # Copy only the built output (much smaller)
-COPY --from=build /build/packages/brain/.output .output
+COPY --from=build --chown=artie:artie /build/packages/brain/.output .output
+
+# Switch to non-root user
+USER artie
 
 EXPOSE 47325
 
