@@ -32,13 +32,9 @@ WORKDIR /app
 # Install curl for health check
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Create data directory for database persistence
-RUN mkdir -p /app/data && chmod 755 /app/data
-
-# Create non-root user and set ownership
-RUN groupadd -g 1000 artie && \
-    useradd -r -u 1000 -g artie artie && \
-    chown -R artie:artie /app
+# Create data directory for database persistence and set ownership for node user
+RUN mkdir -p /app/data && chmod 755 /app/data && \
+    chown -R node:node /app
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -47,11 +43,11 @@ ENV PORT=47325
 ENV DATABASE_PATH=/app/data/coachartie.db
 ENV PRODUCTION=true
 
-# Copy only the built output (much smaller)
-COPY --from=build --chown=artie:artie /build/packages/brain/.output .output
+# Copy only the built output (much smaller) with node user ownership
+COPY --from=build --chown=node:node /build/packages/brain/.output .output
 
-# Switch to non-root user
-USER artie
+# Switch to non-root user (node user already exists in base image as UID 1000)
+USER node
 
 EXPOSE 47325
 
