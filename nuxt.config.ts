@@ -2,9 +2,9 @@ import pkg from './package.json'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-06-06',
+  compatibilityDate: '2024-11-01',
   devServer: {
-    port: 47325, // ⚡ LIGHTSPEED consistent port for debug chat!
+    port: 47325,
     host: '0.0.0.0'
   },
   app: {
@@ -17,45 +17,37 @@ export default defineNuxtConfig({
       ]
     }
   },
-  // Global CSS
   css: ['~/assets/css/main.css'],
-  // Fix for the chunkErrorEvent issue
-  hooks: {
-    'vite:extendConfig': (config) => {
-      if (config.define) {
-        config.define['chunkErrorEvent'] = 'undefined'
-      }
-    },
-    'nitro:init': (nitro) => {
-      nitro.options.prerender = { enable: false }
-    }
-  },
-  ssr: false, // for netlify deploy
+  ssr: false, // SPA mode
   devtools: { enabled: true },
   modules: [
     '@vueuse/nuxt',
-    '@nuxt/ui',
-    [
-      '@nuxtjs/google-fonts',
-      {
-        families: {
-          Figtree: [400, 500, 700, 800]
-        }
+    ['@nuxtjs/google-fonts', {
+      families: {
+        Figtree: [400, 500, 700, 800]
       }
-    ]
+    }]
   ],
   runtimeConfig: {
-    // add the openai api key to the runtime config
     public: {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       PRODUCTION: process.env.PRODUCTION
     }
   },
   nitro: {
-    prerender: false,
-    static: false,
-    experimental: {
-      openPayloadExtraction: false
+    preset: 'node-server'
+  },
+  routeRules: {
+    '/**': { prerender: false }
+  },
+  vite: {
+    build: {
+      rollupOptions: {
+        external: ['sqlite3', 'sqlite', 'better-sqlite3']
+      }
+    },
+    optimizeDeps: {
+      exclude: ['sqlite3', 'sqlite', 'better-sqlite3']
     }
   }
 })

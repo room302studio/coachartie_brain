@@ -41,16 +41,6 @@
                 {{ option.label }}
               </option>
             </select>
-            <div class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
-              <i :class="[currentSortOption.icon, 'text-gray-500 dark:text-gray-400']"></i>
-            </div>
-            <div v-if="currentSortOption.directionIcon"
-              class="absolute inset-y-0 left-0 flex items-center pl-6 pointer-events-none">
-              <i :class="[currentSortOption.directionIcon, 'text-xs text-gray-400 dark:text-gray-500']"></i>
-            </div>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-              <i class="i-mdi-chevron-down text-gray-500 dark:text-gray-400"></i>
-            </div>
 
             <!-- Tooltip -->
             <div class="absolute left-0 top-full mt-1 hidden group-hover:block z-10 tooltip-container">
@@ -69,10 +59,7 @@
         <button @click="refreshQueue"
           class="px-3 py-1.5 text-sm bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded hover:bg-primary-100 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
           aria-label="Refresh queue items" :disabled="loading">
-          <span class="flex items-center gap-1">
-            <i class="i-mdi-refresh text-lg" :class="{ 'animate-spin': loading }"></i>
-            {{ loading ? 'Refreshing...' : 'Refresh' }}
-          </span>
+          {{ loading ? 'Refreshing...' : 'Refresh' }}
         </button>
       </div>
 
@@ -125,13 +112,13 @@
               <!-- Retries badge (if any) -->
               <span v-if="item.retries > 0"
                 class="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                <i class="i-mdi-refresh text-xs mr-0.5"></i>{{ item.retries }}/{{ item.max_retries }}
+                {{ item.retries }}/{{ item.max_retries }}
               </span>
 
               <!-- Priority badge -->
               <span
                 class="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                <i class="i-mdi-flag-outline text-xs mr-0.5"></i>{{ item.priority }}
+                P{{ item.priority }}
               </span>
 
               <!-- Timestamp -->
@@ -145,7 +132,6 @@
           <div v-if="getPayloadSummary(item.payload)" class="task-summary mt-1.5 mb-1.5">
             <div class="flex items-center justify-between mb-1">
               <div class="font-medium text-xs flex items-center">
-                <i class="i-mdi-code-json text-primary-500 dark:text-primary-400 mr-1"></i>
                 <span>TASK_DATA</span>
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">
@@ -157,7 +143,6 @@
               <!-- Action badge -->
               <div class="col-span-3" v-if="getPayloadProperty(item.payload, 'action')">
                 <div class="action-badge">
-                  <i :class="getActionIcon(getPayloadProperty(item.payload, 'action'))" class="mr-1"></i>
                   <span class="truncate">{{ getPayloadProperty(item.payload, 'action') }}</span>
                 </div>
               </div>
@@ -171,9 +156,7 @@
                     <span class="param-key">{{ key }}</span>
                     <span class="param-value truncate" :title="formatParamValue(value)">
                       {{ formatParamValue(value) }}
-                      <i v-if="isExpandableParam(value)"
-                        class="i-mdi-chevron-down text-xs ml-0.5 transform transition-transform"
-                        :class="{ 'rotate-180': isNestedParamExpanded(item.id, key) }"></i>
+                      <span v-if="isExpandableParam(value)" class="text-xs ml-0.5">{{ isNestedParamExpanded(item.id, key) ? '▲' : '▼' }}</span>
                     </span>
 
                     <!-- Expanded nested object -->
@@ -192,7 +175,6 @@
               <!-- Content preview (if it exists) -->
               <div v-if="getPayloadProperty(item.payload, 'content')" class="col-span-12 mt-0.5">
                 <div class="content-chip">
-                  <i class="i-mdi-text text-gray-500 dark:text-gray-400 mr-1"></i>
                   <span class="content-text truncate">{{ getPayloadProperty(item.payload, 'content') }}</span>
                 </div>
               </div>
@@ -203,17 +185,15 @@
           <div class="mt-1.5 flex justify-end items-center">
             <div v-if="expandedItem !== item.id" class="flex items-center">
               <button @click="expandedItem = item.id"
-                class="text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 px-2 py-0.5 rounded-sm dark:text-gray-300 flex items-center transition-colors">
-                <i class="i-mdi-code-braces text-xs mr-1"></i>
-                <span class="font-mono">DETAILS</span>
+                class="text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 px-2 py-0.5 rounded-sm dark:text-gray-300 font-mono transition-colors">
+                [DETAILS]
               </button>
             </div>
 
             <div v-else class="flex items-center">
               <button @click="expandedItem = null"
-                class="text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 py-0.5 rounded-sm dark:text-gray-200 flex items-center transition-colors">
-                <i class="i-mdi-chevron-up text-xs mr-1"></i>
-                <span class="font-mono">COLLAPSE</span>
+                class="text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 py-0.5 rounded-sm dark:text-gray-200 font-mono transition-colors">
+                [COLLAPSE]
               </button>
             </div>
           </div>
@@ -223,9 +203,8 @@
             <div class="mt-2 space-y-2">
               <!-- Timestamps section -->
               <div class="bg-gray-50 dark:bg-gray-800/60 p-2 rounded border border-gray-200 dark:border-gray-700">
-                <div class="text-xs font-semibold mb-1 dark:text-gray-300 flex items-center">
-                  <i class="i-mdi-clock-outline mr-1"></i>
-                  <span>TIMESTAMPS</span>
+                <div class="text-xs font-semibold mb-1 dark:text-gray-300">
+                  TIMESTAMPS
                 </div>
                 <div class="grid grid-cols-2 gap-1 text-xs">
                   <div>
@@ -254,9 +233,8 @@
 
               <!-- Payload section -->
               <div class="bg-gray-50 dark:bg-gray-800/60 p-2 rounded border border-gray-200 dark:border-gray-700">
-                <div class="text-xs font-semibold mb-1 dark:text-gray-300 flex items-center">
-                  <i class="i-mdi-code-json mr-1"></i>
-                  <span>PAYLOAD</span>
+                <div class="text-xs font-semibold mb-1 dark:text-gray-300">
+                  PAYLOAD
                 </div>
                 <pre
                   class="text-xs whitespace-pre-wrap break-words dark:text-gray-300 font-mono">{{ formatJson(item.payload) }}</pre>
@@ -265,9 +243,8 @@
               <!-- Metadata section (if exists) -->
               <div v-if="item.metadata"
                 class="bg-gray-50 dark:bg-gray-800/60 p-2 rounded border border-gray-200 dark:border-gray-700">
-                <div class="text-xs font-semibold mb-1 dark:text-gray-300 flex items-center">
-                  <i class="i-mdi-information-outline mr-1"></i>
-                  <span>METADATA</span>
+                <div class="text-xs font-semibold mb-1 dark:text-gray-300">
+                  METADATA
                 </div>
                 <pre
                   class="text-xs whitespace-pre-wrap break-words dark:text-gray-300 font-mono">{{ formatJson(item.metadata) }}</pre>
@@ -276,9 +253,8 @@
               <!-- Respond to section (if exists) -->
               <div v-if="item.respond_to"
                 class="bg-gray-50 dark:bg-gray-800/60 p-2 rounded border border-gray-200 dark:border-gray-700">
-                <div class="text-xs font-semibold mb-1 dark:text-gray-300 flex items-center">
-                  <i class="i-mdi-reply-outline mr-1"></i>
-                  <span>RESPOND_TO</span>
+                <div class="text-xs font-semibold mb-1 dark:text-gray-300">
+                  RESPOND_TO
                 </div>
                 <pre
                   class="text-xs whitespace-pre-wrap break-words dark:text-gray-300 font-mono">{{ formatJson(item.respond_to) }}</pre>
@@ -287,9 +263,8 @@
               <!-- Error section (if exists) -->
               <div v-if="item.error_message"
                 class="bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
-                <div class="text-xs font-semibold mb-1 text-red-600 dark:text-red-400 flex items-center">
-                  <i class="i-mdi-alert-circle-outline mr-1"></i>
-                  <span>ERROR</span>
+                <div class="text-xs font-semibold mb-1 text-red-600 dark:text-red-400">
+                  ERROR
                 </div>
                 <pre
                   class="text-xs whitespace-pre-wrap break-words text-red-600 dark:text-red-400 font-mono">{{ item.error_message }}</pre>
@@ -326,11 +301,11 @@ const now = ref(new Date())
 
 // Sorting functionality
 const sortOptions = [
-  { value: 'createdAt-desc', label: 'Newest First', icon: 'i-mdi-clock-outline', directionIcon: 'i-mdi-arrow-down' },
-  { value: 'createdAt-asc', label: 'Oldest First', icon: 'i-mdi-clock-outline', directionIcon: 'i-mdi-arrow-up' },
-  { value: 'priority-desc', label: 'Highest Priority First', icon: 'i-mdi-flag-outline', directionIcon: 'i-mdi-arrow-down' },
-  { value: 'priority-asc', label: 'Lowest Priority First', icon: 'i-mdi-flag-outline', directionIcon: 'i-mdi-arrow-up' },
-  { value: 'status', label: 'By Status', icon: 'i-mdi-tag-outline', directionIcon: '' }
+  { value: 'createdAt-desc', label: 'Newest First' },
+  { value: 'createdAt-asc', label: 'Oldest First' },
+  { value: 'priority-desc', label: 'Highest Priority First' },
+  { value: 'priority-asc', label: 'Lowest Priority First' },
+  { value: 'status', label: 'By Status' }
 ]
 const selectedSort = ref('createdAt-desc')
 
@@ -640,31 +615,6 @@ const vHighlightSelected = {
   }
 };
 
-// Get icon for action type
-const getActionIcon = (action) => {
-  if (!action) return 'i-mdi-help-circle-outline'
-
-  const actionMap = {
-    'fetch': 'i-mdi-web',
-    'web': 'i-mdi-web',
-    'search': 'i-mdi-magnify',
-    'process': 'i-mdi-cog-outline',
-    'generate': 'i-mdi-creation',
-    'analyze': 'i-mdi-chart-bar',
-    'extract': 'i-mdi-format-list-bulleted',
-    'transform': 'i-mdi-swap-horizontal',
-    'store': 'i-mdi-database',
-    'notify': 'i-mdi-bell-outline',
-    'email': 'i-mdi-email-outline',
-    'send': 'i-mdi-send',
-    'delete': 'i-mdi-delete-outline',
-    'update': 'i-mdi-update',
-    'create': 'i-mdi-plus-circle-outline'
-  }
-
-  // Return specific icon or default
-  return actionMap[action.toLowerCase()] || 'i-mdi-code-tags'
-}
 </script>
 
 <style scoped>
@@ -1003,13 +953,6 @@ const getActionIcon = (action) => {
   box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), 0.2);
 }
 
-.sort-controls .i-mdi-chevron-down {
-  transition: transform 0.2s ease;
-}
-
-.sort-controls select:focus+div+div+div .i-mdi-chevron-down {
-  transform: rotate(180deg);
-}
 
 .tooltip-container {
   opacity: 0;
