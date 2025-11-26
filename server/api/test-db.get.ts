@@ -1,15 +1,23 @@
-import { defineEventHandler } from 'h3'
-import path from 'path'
-import fs from 'fs'
+/**
+ * Test DB Connection Endpoint
+ *
+ * Uses the shared Drizzle client
+ */
 
-export default defineEventHandler(async (event) => {
-  const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-  
+import { defineEventHandler } from 'h3'
+import { getDefaultDbPath } from '@coachartie/shared'
+import { existsSync } from 'fs'
+import { resolve } from 'path'
+
+export default defineEventHandler(async () => {
+  const dbPath = getDefaultDbPath()
+  const absolutePath = resolve(dbPath)
+
   return {
     cwd: process.cwd(),
     dbPath,
     envPath: process.env.DATABASE_PATH,
-    exists: fs.existsSync(dbPath),
-    absolutePath: path.resolve(dbPath)
+    exists: existsSync(absolutePath),
+    absolutePath
   }
 })

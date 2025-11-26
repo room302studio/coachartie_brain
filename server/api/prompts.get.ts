@@ -1,33 +1,25 @@
+/**
+ * Prompts API Endpoint
+ *
+ * Uses the shared Drizzle schema - SINGLE SOURCE OF TRUTH
+ */
+
 import { defineEventHandler } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, prompts, promptHistory } from '@coachartie/shared'
+import { desc, eq } from 'drizzle-orm'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   try {
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
+    const db = getDb()
 
-    const prompts = await db.all(`
-      SELECT
-        id,
-        name as prompt_name,
-        content as prompt_text,
-        description as notes,
-        category as type,
-        is_active as active,
-        metadata,
-        created_at,
-        updated_at
-      FROM prompts
-      ORDER BY updated_at DESC
-    `)
+    const allPrompts = await db
+      .select()
+      .from(prompts)
+      .orderBy(desc(prompts.updatedAt))
 
     // Fetch history for all prompts and parse metadata
-    const promptsWithData = await Promise.all(prompts.map(async (prompt) => {
-      let metadata = {}
+    const promptsWithData = await Promise.all(allPrompts.map(async (prompt) => {
+      let metadata: any = {}
       let archived = false
 
       try {
@@ -40,42 +32,43 @@ export default defineEventHandler(async (event) => {
       }
 
       // Fetch history for this prompt
-      const history = await db.all(`
-        SELECT
-          version,
-          content,
-          change_reason,
-          created_at as timestamp
-        FROM prompt_history
-        WHERE prompt_id = ?
-        ORDER BY version DESC
-      `, [prompt.id])
+      const history = await db
+        .select()
+        .from(promptHistory)
+        .where(eq(promptHistory.promptId, prompt.id))
+        .orderBy(desc(promptHistory.version))
 
       // Format history to match expected structure
       const formattedHistory = history.map(h => ({
-        timestamp: h.timestamp,
+        timestamp: h.createdAt,
         version: {
           prompt_text: h.content,
-          notes: h.change_reason,
+          notes: h.changeReason,
           version: h.version
         }
       }))
 
       return {
-        ...prompt,
+        id: prompt.id,
+        prompt_name: prompt.name,
+        prompt_text: prompt.content,
+        notes: prompt.description,
+        type: prompt.category,
+        active: prompt.isActive,
+        metadata: prompt.metadata,
+        created_at: prompt.createdAt,
+        updated_at: prompt.updatedAt,
         archived,
         history: formattedHistory
       }
     }))
-
-    await db.close()
 
     return {
       success: true,
       data: promptsWithData,
       count: promptsWithData.length
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching prompts:', error)
     return {
       success: false,
