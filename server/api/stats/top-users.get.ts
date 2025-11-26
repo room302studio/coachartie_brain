@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, messages } from '@coachartie/shared'
+import { ne, gte, count, max, min, desc, sql } from 'drizzle-orm'
 
 /**
  * Get top users by message count
@@ -21,33 +21,13 @@ export default defineEventHandler(async (event) => {
     const timeRange = query.timeRange as string || null
     const includeArtie = query.includeArtie === 'true'
 
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
+    const db = getDb()
 
-    // Check if messages table exists
-    const tableExists = await db.get(`
-      SELECT name FROM sqlite_master
-      WHERE type='table' AND name='messages'
-    `)
-
-    if (!tableExists) {
-      await db.close()
-      return {
-        success: true,
-        data: [],
-        message: 'Messages table does not exist yet'
-      }
-    }
-
-    const whereConditions: string[] = []
-    const params: any[] = []
+    const whereConditions = []
 
     // Exclude Artie unless requested
     if (!includeArtie) {
-      whereConditions.push(`user_id != 'artie'`)
+      whereConditions.push(ne(messages.userId, 'artie'))
     }
 
     // Add time range filter
@@ -57,32 +37,31 @@ export default defineEventHandler(async (event) => {
         const [, amount, unit] = match
         const unitMap: Record<string, string> = { h: 'hours', d: 'days', w: 'days', m: 'days' }
         const multiplier = unit === 'w' ? parseInt(amount) * 7 : unit === 'm' ? parseInt(amount) * 30 : parseInt(amount)
-        whereConditions.push(`datetime(created_at) >= datetime('now', '-${multiplier} ${unitMap[unit]}')`)
+        whereConditions.push(
+          sql`datetime(${messages.createdAt}) >= datetime('now', '-${sql.raw(multiplier.toString())} ${sql.raw(unitMap[unit])}')`
+        )
       }
     }
 
-    let sql = `
-      SELECT
-        user_id,
-        COUNT(*) as message_count,
-        MAX(created_at) as last_message_at,
-        MIN(created_at) as first_message_at
-      FROM messages
-    `
+    let queryBuilder = db
+      .select({
+        userId: messages.userId,
+        messageCount: count(),
+        lastMessageAt: max(messages.createdAt),
+        firstMessageAt: min(messages.createdAt)
+      })
+      .from(messages)
 
     if (whereConditions.length > 0) {
-      sql += ` WHERE ${whereConditions.join(' AND ')}`
+      queryBuilder = queryBuilder.where(
+        whereConditions.length === 1 ? whereConditions[0] : sql`${whereConditions.join(' AND ')}`
+      ) as any
     }
 
-    sql += `
-      GROUP BY user_id
-      ORDER BY message_count DESC
-      LIMIT ?
-    `
-    params.push(limit)
-
-    const results = await db.all(sql, params)
-    await db.close()
+    const results = await queryBuilder
+      .groupBy(messages.userId)
+      .orderBy(desc(count()))
+      .limit(limit)
 
     return {
       success: true,

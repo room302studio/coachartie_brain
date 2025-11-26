@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, messages, memories, meetings, meetingParticipants } from '@coachartie/shared'
+import { sql } from 'drizzle-orm'
 
 /**
  * Flexible analytics endpoint for aggregation queries
@@ -59,11 +59,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
+    const db = getDb()
 
     // Parse aggregates (e.g., "count,max:created_at,avg:importance")
     const aggregates = aggregatesParam.split(',').map(agg => {
@@ -132,25 +128,24 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Construct final query
-    let sql = `
+    // Construct final query using raw SQL (since this is a dynamic query builder)
+    let sqlQuery = `
       SELECT ${selectClauses.join(', ')}
       FROM ${table}
     `
 
     if (whereConditions.length > 0) {
-      sql += ` WHERE ${whereConditions.join(' AND ')}`
+      sqlQuery += ` WHERE ${whereConditions.join(' AND ')}`
     }
 
-    sql += `
+    sqlQuery += `
       GROUP BY ${groupBy}
       ORDER BY ${orderBy}
       LIMIT ?
     `
     params.push(limit)
 
-    const results = await db.all(sql, params)
-    await db.close()
+    const results = await db.all(sql.raw(sqlQuery), params)
 
     return {
       success: true,

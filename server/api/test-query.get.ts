@@ -1,25 +1,23 @@
 import { defineEventHandler } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, memories } from '@coachartie/shared'
+import { count } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
     const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
-    
-    const count = await db.get('SELECT COUNT(*) as count FROM memories')
-    const sample = await db.all('SELECT id, user_id, created_at FROM memories LIMIT 3')
-    
-    await db.close()
-    
+    const db = getDb()
+
+    const [countResult] = await db.select({ count: count() }).from(memories)
+    const sample = await db.select({
+      id: memories.id,
+      userId: memories.userId,
+      createdAt: memories.createdAt
+    }).from(memories).limit(3)
+
     return {
       success: true,
       dbPath,
-      memoryCount: count?.count,
+      memoryCount: countResult?.count,
       sampleMemories: sample
     }
   } catch (error) {

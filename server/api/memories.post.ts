@@ -1,7 +1,6 @@
 import { defineEventHandler, readBody } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
-import crypto from 'crypto'
+import { getDb, memories } from '@coachartie/shared'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -15,42 +14,23 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
-
-    // Generate content hash
-    const contentHash = crypto.createHash('md5').update(content).digest('hex')
+    const db = getDb()
 
     // Insert memory
     const timestamp = new Date().toISOString()
-    const result = await db.run(
-      `INSERT INTO memories (
-        content,
-        user_id,
-        tags,
-        context,
-        importance,
-        created_at,
-        timestamp,
-        related_message_id
-      ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
-      [content, user_id || 'anonymous', tags || '[]', context || '', importance, timestamp, related_message_id || null]
-    )
-    
-    // Fetch the inserted memory
-    const memory = await db.get(
-      'SELECT * FROM memories WHERE id = ?',
-      [result.lastID]
-    )
-    
-    await db.close()
-    
+    const result = await db.insert(memories).values({
+      content,
+      userId: user_id || 'anonymous',
+      tags: tags || '[]',
+      context: context || '',
+      importance,
+      timestamp,
+      relatedMessageId: related_message_id || null
+    }).returning()
+
     return {
       success: true,
-      data: memory
+      data: result[0]
     }
   } catch (error) {
     console.error('Error creating memory:', error)

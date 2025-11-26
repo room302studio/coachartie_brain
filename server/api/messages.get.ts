@@ -1,75 +1,49 @@
 import { defineEventHandler, getQuery } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, messages } from '@coachartie/shared'
+import { eq, desc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
     const limit = query.limit ? parseInt(query.limit as string) : 100
     const userId = query.user_id as string || null
-    
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
-    
-    // Check if messages table exists
-    const tableExists = await db.get(`
-      SELECT name FROM sqlite_master 
-      WHERE type='table' AND name='messages'
-    `)
-    
-    if (!tableExists) {
-      await db.close()
-      return {
-        success: true,
-        data: [],
-        message: 'Messages table does not exist yet'
-      }
-    }
-    
-    let sql = `
-      SELECT 
-        id,
-        value,
-        user_id,
-        created_at,
-        message_type,
-        channel_id,
-        guild_id
-      FROM messages
-      ORDER BY created_at DESC
-      LIMIT ?
-    `
-    
-    const params = [limit]
-    
+
+    const db = getDb()
+
+    let results
     if (userId) {
-      sql = `
-        SELECT 
-          id,
-          value,
-          user_id,
-          created_at,
-          message_type,
-          channel_id,
-          guild_id
-        FROM messages
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        LIMIT ?
-      `
-      params.unshift(userId)
+      results = await db.select({
+        id: messages.id,
+        value: messages.value,
+        userId: messages.userId,
+        createdAt: messages.createdAt,
+        messageType: messages.messageType,
+        channelId: messages.channelId,
+        guildId: messages.guildId
+      })
+      .from(messages)
+      .where(eq(messages.userId, userId))
+      .orderBy(desc(messages.createdAt))
+      .limit(limit)
+    } else {
+      results = await db.select({
+        id: messages.id,
+        value: messages.value,
+        userId: messages.userId,
+        createdAt: messages.createdAt,
+        messageType: messages.messageType,
+        channelId: messages.channelId,
+        guildId: messages.guildId
+      })
+      .from(messages)
+      .orderBy(desc(messages.createdAt))
+      .limit(limit)
     }
-    
-    const messages = await db.all(sql, params)
-    await db.close()
-    
+
     return {
       success: true,
-      data: messages,
-      count: messages.length
+      data: results,
+      count: results.length
     }
   } catch (error) {
     console.error('Error fetching messages:', error)

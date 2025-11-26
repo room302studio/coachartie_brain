@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, memories } from '@coachartie/shared'
+import { eq, gte, sql } from 'drizzle-orm'
 
 /**
  * Full-text search endpoint for memories using SQLite FTS5
@@ -32,29 +32,26 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
+    const db = getDb()
 
-    // Check if FTS table exists
-    const ftsExists = await db.get(`
-      SELECT name FROM sqlite_master
-      WHERE type='table' AND name='memories_fts'
-    `)
+    // Build query with filters using raw SQL for FTS5
+    // FTS5 requires raw SQL for the MATCH operation
+    const whereConditions = [`fts.content MATCH ?`]
+    const params: any[] = [searchQuery]
 
-    if (!ftsExists) {
-      await db.close()
-      return {
-        success: false,
-        error: 'Full-text search not available (memories_fts table missing)',
-        data: []
-      }
+    if (userId) {
+      whereConditions.push(`m.user_id = ?`)
+      params.push(userId)
     }
 
-    // Build query with filters
-    let sql = `
+    if (minImportance > 0) {
+      whereConditions.push(`m.importance >= ?`)
+      params.push(minImportance)
+    }
+
+    params.push(limit)
+
+    const results = await db.all(sql.raw(`
       SELECT
         m.id,
         m.content,
@@ -68,29 +65,10 @@ export default defineEventHandler(async (event) => {
         fts.rank
       FROM memories_fts fts
       JOIN memories m ON m.id = fts.rowid
-      WHERE fts.content MATCH ?
-    `
-
-    const params: any[] = [searchQuery]
-
-    if (userId) {
-      sql += ` AND m.user_id = ?`
-      params.push(userId)
-    }
-
-    if (minImportance > 0) {
-      sql += ` AND m.importance >= ?`
-      params.push(minImportance)
-    }
-
-    sql += `
+      WHERE ${whereConditions.join(' AND ')}
       ORDER BY fts.rank, m.importance DESC, m.created_at DESC
       LIMIT ?
-    `
-    params.push(limit)
-
-    const results = await db.all(sql, params)
-    await db.close()
+    `), params)
 
     return {
       success: true,

@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, memories } from '@coachartie/shared'
+import { gte, count, avg, max, desc, isNotNull, ne, sql } from 'drizzle-orm'
 
 /**
  * Get trending topics in memories by analyzing tags and content
@@ -26,70 +26,97 @@ export default defineEventHandler(async (event) => {
     const timeRange = query.timeRange as string || null
     const minImportance = query.min_importance ? parseInt(query.min_importance as string) : 0
 
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
+    const db = getDb()
 
     // Build time filter
-    let timeFilter = ''
+    let timeFilterCondition: any = null
     if (timeRange) {
       const match = timeRange.match(/^(\d+)(h|d|w|m)$/)
       if (match) {
         const [, amount, unit] = match
         const unitMap: Record<string, string> = { h: 'hours', d: 'days', w: 'days', m: 'days' }
         const multiplier = unit === 'w' ? parseInt(amount) * 7 : unit === 'm' ? parseInt(amount) * 30 : parseInt(amount)
-        timeFilter = `AND datetime(created_at) >= datetime('now', '-${multiplier} ${unitMap[unit]}')`
+        timeFilterCondition = sql`datetime(${memories.createdAt}) >= datetime('now', '-${sql.raw(multiplier.toString())} ${sql.raw(unitMap[unit])}')`
       }
     }
 
     // Get memory count by importance level
-    const importanceDistribution = await db.all(`
-      SELECT
-        importance,
-        COUNT(*) as count
-      FROM memories
-      WHERE importance >= ? ${timeFilter}
-      GROUP BY importance
-      ORDER BY importance DESC
-    `, [minImportance])
+    let importanceQuery = db
+      .select({
+        importance: memories.importance,
+        count: count()
+      })
+      .from(memories)
+      .where(gte(memories.importance, minImportance))
+
+    if (timeFilterCondition) {
+      importanceQuery = importanceQuery.where(
+        sql`${gte(memories.importance, minImportance)} AND ${timeFilterCondition}`
+      ) as any
+    }
+
+    const importanceDistribution = await importanceQuery
+      .groupBy(memories.importance)
+      .orderBy(desc(memories.importance))
 
     // Get top users by memory count
-    const topMemoryUsers = await db.all(`
-      SELECT
-        user_id,
-        COUNT(*) as memory_count,
-        AVG(importance) as avg_importance,
-        MAX(created_at) as last_memory
-      FROM memories
-      WHERE importance >= ? ${timeFilter}
-      GROUP BY user_id
-      ORDER BY memory_count DESC
-      LIMIT ?
-    `, [minImportance, limit])
+    let topUsersQuery = db
+      .select({
+        userId: memories.userId,
+        memoryCount: count(),
+        avgImportance: avg(memories.importance),
+        lastMemory: max(memories.createdAt)
+      })
+      .from(memories)
+      .where(gte(memories.importance, minImportance))
+
+    if (timeFilterCondition) {
+      topUsersQuery = topUsersQuery.where(
+        sql`${gte(memories.importance, minImportance)} AND ${timeFilterCondition}`
+      ) as any
+    }
+
+    const topMemoryUsers = await topUsersQuery
+      .groupBy(memories.userId)
+      .orderBy(desc(count()))
+      .limit(limit)
 
     // Get recent high-importance memories
-    const importantMemories = await db.all(`
-      SELECT
-        id,
-        content,
-        user_id,
-        importance,
-        tags,
-        created_at
-      FROM memories
-      WHERE importance >= 7 ${timeFilter}
-      ORDER BY importance DESC, created_at DESC
-      LIMIT ?
-    `, [limit])
+    let importantMemoriesQuery = db
+      .select({
+        id: memories.id,
+        content: memories.content,
+        userId: memories.userId,
+        importance: memories.importance,
+        tags: memories.tags,
+        createdAt: memories.createdAt
+      })
+      .from(memories)
+      .where(gte(memories.importance, 7))
+
+    if (timeFilterCondition) {
+      importantMemoriesQuery = importantMemoriesQuery.where(
+        sql`${gte(memories.importance, 7)} AND ${timeFilterCondition}`
+      ) as any
+    }
+
+    const importantMemories = await importantMemoriesQuery
+      .orderBy(desc(memories.importance), desc(memories.createdAt))
+      .limit(limit)
 
     // Parse tags from all memories and count frequency
-    const allMemories = await db.all(`
-      SELECT tags
-      FROM memories
-      WHERE tags IS NOT NULL AND tags != '[]' ${timeFilter}
-    `)
+    let allMemoriesQuery = db
+      .select({ tags: memories.tags })
+      .from(memories)
+      .where(sql`${isNotNull(memories.tags)} AND ${ne(memories.tags, '[]')}`)
+
+    if (timeFilterCondition) {
+      allMemoriesQuery = allMemoriesQuery.where(
+        sql`${isNotNull(memories.tags)} AND ${ne(memories.tags, '[]')} AND ${timeFilterCondition}`
+      ) as any
+    }
+
+    const allMemories = await allMemoriesQuery
 
     const tagFrequency: Record<string, number> = {}
     allMemories.forEach(row => {
@@ -108,20 +135,30 @@ export default defineEventHandler(async (event) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, limit)
 
-    // Get memory creation trend (daily counts)
-    const creationTrend = await db.all(`
-      SELECT
-        DATE(created_at) as date,
-        COUNT(*) as count,
-        AVG(importance) as avg_importance
-      FROM memories
-      WHERE importance >= ? ${timeFilter}
-      GROUP BY DATE(created_at)
-      ORDER BY date DESC
-      LIMIT 30
-    `, [minImportance])
-
-    await db.close()
+    // Get memory creation trend (daily counts) using raw SQL for DATE function
+    const creationTrendRaw = timeFilterCondition
+      ? await db.all(sql.raw(`
+          SELECT
+            DATE(created_at) as date,
+            COUNT(*) as count,
+            AVG(importance) as avg_importance
+          FROM memories
+          WHERE importance >= ? AND datetime(created_at) >= datetime('now', '-${timeRange}')
+          GROUP BY DATE(created_at)
+          ORDER BY date DESC
+          LIMIT 30
+        `), [minImportance])
+      : await db.all(sql.raw(`
+          SELECT
+            DATE(created_at) as date,
+            COUNT(*) as count,
+            AVG(importance) as avg_importance
+          FROM memories
+          WHERE importance >= ?
+          GROUP BY DATE(created_at)
+          ORDER BY date DESC
+          LIMIT 30
+        `), [minImportance])
 
     return {
       success: true,
@@ -131,7 +168,7 @@ export default defineEventHandler(async (event) => {
         importance_distribution: importanceDistribution,
         top_users: topMemoryUsers,
         important_memories: importantMemories,
-        creation_trend: creationTrend
+        creation_trend: creationTrendRaw
       }
     }
   } catch (error: any) {

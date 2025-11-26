@@ -1,7 +1,7 @@
 import { defineEventHandler } from 'h3'
 import { format } from 'date-fns'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, messages, memories } from '@coachartie/shared'
+import { count, sql } from 'drizzle-orm'
 
 // Define types for our data structures
 interface MessageTypes {
@@ -52,43 +52,44 @@ interface StatusData extends TimeSeriesData, MemoryDistributions {
  */
 export default defineEventHandler(async (event) => {
   try {
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
-    
+    const db = getDb()
+
     // Get real counts from database (handle missing tables)
     let memoryCountResult = { count: 0 }
     let messageCountResult = { count: 0 }
     let queueCountResult = { count: 0 }
     let todoCountResult = { count: 0 }
     let configCountResult = { count: 0 }
-    
+
     try {
-      memoryCountResult = await db.get('SELECT COUNT(*) as count FROM memories')
+      const [result] = await db.select({ count: count() }).from(memories)
+      memoryCountResult = result
     } catch (e) { }
-    
+
     try {
-      messageCountResult = await db.get('SELECT COUNT(*) as count FROM messages')
+      const [result] = await db.select({ count: count() }).from(messages)
+      messageCountResult = result
     } catch (e) { }
-    
+
     try {
-      queueCountResult = await db.get('SELECT COUNT(*) as count FROM queue')
+      const result = await db.all(sql.raw('SELECT COUNT(*) as count FROM queue'))
+      queueCountResult = result[0] || { count: 0 }
     } catch (e) { }
-    
+
     try {
-      todoCountResult = await db.get('SELECT COUNT(*) as count FROM todos')
+      const result = await db.all(sql.raw('SELECT COUNT(*) as count FROM todos'))
+      todoCountResult = result[0] || { count: 0 }
     } catch (e) { }
-    
+
     try {
-      configCountResult = await db.get('SELECT COUNT(*) as count FROM config')
+      const result = await db.all(sql.raw('SELECT COUNT(*) as count FROM config'))
+      configCountResult = result[0] || { count: 0 }
     } catch (e) { }
     
     // Get memory type distribution (using tags since memory_type doesn't exist)
-    const memoryTypesResult = await db.all(`
-      SELECT 
-        CASE 
+    const memoryTypesResult = await db.all(sql.raw(`
+      SELECT
+        CASE
           WHEN tags IS NOT NULL AND tags != '' THEN 'tagged'
           ELSE 'general'
         END as name,
@@ -96,52 +97,56 @@ export default defineEventHandler(async (event) => {
       FROM memories
       GROUP BY name
       ORDER BY count DESC
-    `)
+    `))
     
     // Get memory age distribution
     const now = new Date()
     const memoryAgeData: MemoryDistribution[] = []
-    
+
     // Today
-    const todayCount = await db.get(`
-      SELECT COUNT(*) as count FROM memories 
+    const todayCountRaw = await db.all(sql.raw(`
+      SELECT COUNT(*) as count FROM memories
       WHERE datetime(created_at) >= datetime('now', '-1 day')
-    `)
+    `))
+    const todayCount = todayCountRaw[0]
     if (todayCount?.count > 0) memoryAgeData.push({ name: 'Today', count: todayCount.count })
-    
+
     // 1-7 days
-    const weekCount = await db.get(`
-      SELECT COUNT(*) as count FROM memories 
+    const weekCountRaw = await db.all(sql.raw(`
+      SELECT COUNT(*) as count FROM memories
       WHERE datetime(created_at) >= datetime('now', '-7 days')
       AND datetime(created_at) < datetime('now', '-1 day')
-    `)
+    `))
+    const weekCount = weekCountRaw[0]
     if (weekCount?.count > 0) memoryAgeData.push({ name: '1-7 days', count: weekCount.count })
-    
+
     // 1-4 weeks
-    const monthCount = await db.get(`
-      SELECT COUNT(*) as count FROM memories 
+    const monthCountRaw = await db.all(sql.raw(`
+      SELECT COUNT(*) as count FROM memories
       WHERE datetime(created_at) >= datetime('now', '-28 days')
       AND datetime(created_at) < datetime('now', '-7 days')
-    `)
+    `))
+    const monthCount = monthCountRaw[0]
     if (monthCount?.count > 0) memoryAgeData.push({ name: '1-4 weeks', count: monthCount.count })
-    
+
     // 3+ months
-    const oldCount = await db.get(`
-      SELECT COUNT(*) as count FROM memories 
+    const oldCountRaw = await db.all(sql.raw(`
+      SELECT COUNT(*) as count FROM memories
       WHERE datetime(created_at) < datetime('now', '-28 days')
-    `)
+    `))
+    const oldCount = oldCountRaw[0]
     if (oldCount?.count > 0) memoryAgeData.push({ name: '3+ months', count: oldCount.count })
     
     // Get time series data for last 24 hours
-    const last24Hours = await db.all(`
-      SELECT 
+    const last24Hours = await db.all(sql.raw(`
+      SELECT
         strftime('%Y-%m-%d %H:00:00', created_at) as hour,
         COUNT(*) as count
       FROM memories
       WHERE datetime(created_at) >= datetime('now', '-24 hours')
       GROUP BY hour
       ORDER BY hour
-    `)
+    `))
     
     // Generate full 24-hour timeline
     const timePoints: string[] = []
@@ -168,14 +173,14 @@ export default defineEventHandler(async (event) => {
     // Get message type distribution (if messages table exists)
     let messageTypes: MessageTypes = { email: 0, chat: 0, other: 0 }
     try {
-      const messageTypesResult = await db.all(`
-        SELECT 
+      const messageTypesResult = await db.all(sql.raw(`
+        SELECT
           COALESCE(message_type, 'other') as type,
           COUNT(*) as count
         FROM messages
         GROUP BY message_type
-      `)
-      
+      `))
+
       messageTypesResult.forEach(row => {
         if (row.type === 'email') messageTypes.email = row.count
         else if (row.type === 'chat') messageTypes.chat = row.count
@@ -188,22 +193,20 @@ export default defineEventHandler(async (event) => {
     // Get queue status (if queue table exists)
     let queueStatus: QueueStatus = { completed: 0, error: 0 }
     try {
-      const completedCount = await db.get(`
-        SELECT COUNT(*) as count FROM queue 
+      const completedCountRaw = await db.all(sql.raw(`
+        SELECT COUNT(*) as count FROM queue
         WHERE status = 'completed'
-      `)
-      const errorCount = await db.get(`
-        SELECT COUNT(*) as count FROM queue 
+      `))
+      const errorCountRaw = await db.all(sql.raw(`
+        SELECT COUNT(*) as count FROM queue
         WHERE status = 'error' OR error_message IS NOT NULL
-      `)
-      
-      queueStatus.completed = completedCount?.count || 0
-      queueStatus.error = errorCount?.count || 0
+      `))
+
+      queueStatus.completed = completedCountRaw[0]?.count || 0
+      queueStatus.error = errorCountRaw[0]?.count || 0
     } catch (e) {
       // Queue table might not exist
     }
-    
-    await db.close()
     
     return {
       // Real counts from database

@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
+import { getDb, memories } from '@coachartie/shared'
+import { count, max, min, desc, sql } from 'drizzle-orm'
 
 /**
  * Get top users by memory count
@@ -19,29 +19,16 @@ export default defineEventHandler(async (event) => {
     const limit = query.limit ? parseInt(query.limit as string) : 10
     const timeRange = query.timeRange as string || null
 
-    const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
-    })
+    const db = getDb()
 
-    // Check if memories table exists
-    const tableExists = await db.get(`
-      SELECT name FROM sqlite_master
-      WHERE type='table' AND name='memories'
-    `)
-
-    if (!tableExists) {
-      await db.close()
-      return {
-        success: true,
-        data: [],
-        message: 'Memories table does not exist yet'
-      }
-    }
-
-    const whereConditions: string[] = []
-    const params: any[] = []
+    let queryBuilder = db
+      .select({
+        userId: memories.userId,
+        memoryCount: count(),
+        lastMemoryAt: max(memories.createdAt),
+        firstMemoryAt: min(memories.createdAt)
+      })
+      .from(memories)
 
     // Add time range filter
     if (timeRange) {
@@ -50,32 +37,16 @@ export default defineEventHandler(async (event) => {
         const [, amount, unit] = match
         const unitMap: Record<string, string> = { h: 'hours', d: 'days', w: 'days', m: 'days' }
         const multiplier = unit === 'w' ? parseInt(amount) * 7 : unit === 'm' ? parseInt(amount) * 30 : parseInt(amount)
-        whereConditions.push(`datetime(created_at) >= datetime('now', '-${multiplier} ${unitMap[unit]}')`)
+        queryBuilder = queryBuilder.where(
+          sql`datetime(${memories.createdAt}) >= datetime('now', '-${sql.raw(multiplier.toString())} ${sql.raw(unitMap[unit])}')`
+        ) as any
       }
     }
 
-    let sql = `
-      SELECT
-        user_id,
-        COUNT(*) as memory_count,
-        MAX(created_at) as last_memory_at,
-        MIN(created_at) as first_memory_at
-      FROM memories
-    `
-
-    if (whereConditions.length > 0) {
-      sql += ` WHERE ${whereConditions.join(' AND ')}`
-    }
-
-    sql += `
-      GROUP BY user_id
-      ORDER BY memory_count DESC
-      LIMIT ?
-    `
-    params.push(limit)
-
-    const results = await db.all(sql, params)
-    await db.close()
+    const results = await queryBuilder
+      .groupBy(memories.userId)
+      .orderBy(desc(count()))
+      .limit(limit)
 
     return {
       success: true,
