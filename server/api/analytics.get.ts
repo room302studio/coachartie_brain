@@ -1,6 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, messages, memories, meetings, meetingParticipants } from '@coachartie/shared'
-import { sql } from 'drizzle-orm'
+import { getRawDb } from '@coachartie/shared'
 
 /**
  * Flexible analytics endpoint for aggregation queries
@@ -59,7 +58,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const db = getDb()
+    const rawDb = getRawDb()
 
     // Parse aggregates (e.g., "count,max:created_at,avg:importance")
     const aggregates = aggregatesParam.split(',').map(agg => {
@@ -145,7 +144,7 @@ export default defineEventHandler(async (event) => {
     `
     params.push(limit)
 
-    const results = await db.all(sql.raw(sqlQuery), params)
+    const results = rawDb.prepare(sqlQuery).all(...params)
 
     return {
       success: true,

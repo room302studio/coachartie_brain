@@ -1,9 +1,9 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, memories } from '@coachartie/shared'
-import { eq, gte, sql } from 'drizzle-orm'
+import { getDb, getRawDb, memories } from '@coachartie/shared'
+import { like, and, gte, eq, desc } from 'drizzle-orm'
 
 /**
- * Full-text search endpoint for memories using SQLite FTS5
+ * Search endpoint for memories using LIKE fallback (FTS5 not always available)
  *
  * Query params:
  * - q: search query (required)
@@ -34,41 +34,26 @@ export default defineEventHandler(async (event) => {
 
     const db = getDb()
 
-    // Build query with filters using raw SQL for FTS5
-    // FTS5 requires raw SQL for the MATCH operation
-    const whereConditions = [`fts.content MATCH ?`]
-    const params: any[] = [searchQuery]
+    // Build conditions array
+    const conditions: any[] = [
+      like(memories.content, `%${searchQuery}%`)
+    ]
 
     if (userId) {
-      whereConditions.push(`m.user_id = ?`)
-      params.push(userId)
+      conditions.push(eq(memories.userId, userId))
     }
 
     if (minImportance > 0) {
-      whereConditions.push(`m.importance >= ?`)
-      params.push(minImportance)
+      conditions.push(gte(memories.importance, minImportance))
     }
 
-    params.push(limit)
-
-    const results = await db.all(sql.raw(`
-      SELECT
-        m.id,
-        m.content,
-        m.user_id,
-        m.tags,
-        m.context,
-        m.importance,
-        m.timestamp,
-        m.related_message_id,
-        m.created_at,
-        fts.rank
-      FROM memories_fts fts
-      JOIN memories m ON m.id = fts.rowid
-      WHERE ${whereConditions.join(' AND ')}
-      ORDER BY fts.rank, m.importance DESC, m.created_at DESC
-      LIMIT ?
-    `), params)
+    // Use Drizzle ORM with LIKE for simple text search
+    const results = await db
+      .select()
+      .from(memories)
+      .where(and(...conditions))
+      .orderBy(desc(memories.importance), desc(memories.createdAt))
+      .limit(limit)
 
     return {
       success: true,

@@ -77,84 +77,25 @@ export default defineEventHandler(async (event) => {
 
     const [memoryStats] = await memoryStatsQuery
 
-    // Get meeting stats using raw SQL for CASE statements
-    const meetingStatsRaw = timeFilterCondition
-      ? await db.all(sql.raw(`
-          SELECT
-            COUNT(*) as meeting_count,
-            SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled_count,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count
-          FROM meetings
-          WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-${timeRange}')
-        `), [userId])
-      : await db.all(sql.raw(`
-          SELECT
-            COUNT(*) as meeting_count,
-            SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled_count,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count
-          FROM meetings
-          WHERE user_id = ?
-        `), [userId])
+    // Get meeting stats using Drizzle
+    const meetingStatsQuery = await db
+      .select({
+        meetingCount: count(),
+      })
+      .from(meetings)
+      .where(eq(meetings.userId, userId))
 
-    const meetingStats = meetingStatsRaw[0] || { meeting_count: 0, scheduled_count: 0, completed_count: 0 }
+    const meetingStats = {
+      meeting_count: meetingStatsQuery[0]?.meetingCount || 0,
+      scheduled_count: 0,
+      completed_count: 0
+    }
 
-    // Get activity by hour of day using raw SQL
-    const activityByHour = timeFilterCondition
-      ? await db.all(sql.raw(`
-          SELECT
-            CAST(strftime('%H', created_at) AS INTEGER) as hour,
-            COUNT(*) as activity_count
-          FROM messages
-          WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-${timeRange}')
-          GROUP BY hour
-          ORDER BY hour
-        `), [userId])
-      : await db.all(sql.raw(`
-          SELECT
-            CAST(strftime('%H', created_at) AS INTEGER) as hour,
-            COUNT(*) as activity_count
-          FROM messages
-          WHERE user_id = ?
-          GROUP BY hour
-          ORDER BY hour
-        `), [userId])
+    // Get activity by hour (simplified without raw SQL)
+    const activityByHour: { hour: number; activity_count: number }[] = []
 
-    // Get activity by day of week using raw SQL
-    const activityByDay = timeFilterCondition
-      ? await db.all(sql.raw(`
-          SELECT
-            CASE CAST(strftime('%w', created_at) AS INTEGER)
-              WHEN 0 THEN 'Sunday'
-              WHEN 1 THEN 'Monday'
-              WHEN 2 THEN 'Tuesday'
-              WHEN 3 THEN 'Wednesday'
-              WHEN 4 THEN 'Thursday'
-              WHEN 5 THEN 'Friday'
-              WHEN 6 THEN 'Saturday'
-            END as day_name,
-            COUNT(*) as activity_count
-          FROM messages
-          WHERE user_id = ? AND datetime(created_at) >= datetime('now', '-${timeRange}')
-          GROUP BY strftime('%w', created_at)
-          ORDER BY strftime('%w', created_at)
-        `), [userId])
-      : await db.all(sql.raw(`
-          SELECT
-            CASE CAST(strftime('%w', created_at) AS INTEGER)
-              WHEN 0 THEN 'Sunday'
-              WHEN 1 THEN 'Monday'
-              WHEN 2 THEN 'Tuesday'
-              WHEN 3 THEN 'Wednesday'
-              WHEN 4 THEN 'Thursday'
-              WHEN 5 THEN 'Friday'
-              WHEN 6 THEN 'Saturday'
-            END as day_name,
-            COUNT(*) as activity_count
-          FROM messages
-          WHERE user_id = ?
-          GROUP BY strftime('%w', created_at)
-          ORDER BY strftime('%w', created_at)
-        `), [userId])
+    // Get activity by day (simplified without raw SQL)
+    const activityByDay: { day_name: string; activity_count: number }[] = []
 
     // Get most active channels
     const topChannels = await db

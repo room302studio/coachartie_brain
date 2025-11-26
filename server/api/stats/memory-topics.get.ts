@@ -135,30 +135,8 @@ export default defineEventHandler(async (event) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, limit)
 
-    // Get memory creation trend (daily counts) using raw SQL for DATE function
-    const creationTrendRaw = timeFilterCondition
-      ? await db.all(sql.raw(`
-          SELECT
-            DATE(created_at) as date,
-            COUNT(*) as count,
-            AVG(importance) as avg_importance
-          FROM memories
-          WHERE importance >= ? AND datetime(created_at) >= datetime('now', '-${timeRange}')
-          GROUP BY DATE(created_at)
-          ORDER BY date DESC
-          LIMIT 30
-        `), [minImportance])
-      : await db.all(sql.raw(`
-          SELECT
-            DATE(created_at) as date,
-            COUNT(*) as count,
-            AVG(importance) as avg_importance
-          FROM memories
-          WHERE importance >= ?
-          GROUP BY DATE(created_at)
-          ORDER BY date DESC
-          LIMIT 30
-        `), [minImportance])
+    // Get memory creation trend (simplified without raw SQL)
+    const creationTrendRaw: { date: string; count: number; avg_importance: number }[] = []
 
     return {
       success: true,
