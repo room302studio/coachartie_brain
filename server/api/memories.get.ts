@@ -5,8 +5,7 @@
  */
 
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, memories } from '@coachartie/shared'
-import { desc, eq } from 'drizzle-orm'
+import { getDb, memories, desc, eq } from '@coachartie/shared'
 
 export default defineEventHandler(async (event) => {
   try {

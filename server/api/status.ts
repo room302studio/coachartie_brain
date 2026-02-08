@@ -1,7 +1,6 @@
 import { defineEventHandler } from 'h3'
 import { format } from 'date-fns'
-import { getDb, messages, memories } from '@coachartie/shared'
-import { count, sql } from 'drizzle-orm'
+import { getDb, messages, memories, count, sql } from '@coachartie/shared'
 
 // Define types for our data structures
 interface MessageTypes {

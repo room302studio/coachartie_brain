@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-screen flex flex-col bg-white dark:bg-black text-gray-800 dark:text-gray-100 overflow-hidden">
+  <div class="h-screen w-screen flex flex-col dark:bg-black text-gray-800 dark:text-gray-100 overflow-hidden">
     <!-- Header (compact) -->
     <header class="px-3 py-1 flex flex-col gap-1 border-b border-gray-200 dark:border-gray-800 text-[10px] select-none">
       <div class="flex items-center gap-3">
@@ -59,7 +59,7 @@
             <!-- Expanded meta detail -->
             <div v-for="(val, key) in filteredMeta(message.meta || {})" :key="key + '-detail'"
               v-show="isMetaDetailOpen(message.id, key)"
-              class="mt-1 ml-1 border border-dashed border-gray-300 dark:border-gray-700 rounded p-1.5 bg-white/60 dark:bg-black/40 text-[11px] max-h-48 overflow-auto leading-snug">
+              class="mt-1 ml-1 border border-dashed border-gray-300 dark:border-gray-700 rounded p-1.5 dark:bg-black/40 text-[11px] max-h-48 overflow-auto leading-snug">
               <pre class="whitespace-pre-wrap break-words">{{ pretty(val) }}</pre>
             </div>
           </div>
@@ -76,7 +76,7 @@
       </div>
 
       <!-- Input Bar (sticky) -->
-      <div class="border-t border-gray-200 dark:border-gray-800 p-2 bg-white/90 dark:bg-black/80 backdrop-blur-sm">
+      <div class="border-t border-gray-200 dark:border-gray-800 p-2 dark:bg-black/80 backdrop-blur-sm">
         <div class="flex items-end gap-2">
           <textarea ref="textarea" v-model="newMessage" @keydown.enter.exact.prevent="sendMessage"
             @keydown.enter.shift.exact="insertNewline" :disabled="isLoading"
@@ -203,7 +203,7 @@ async function sendMessage() {
 
   try {
     // Call capabilities API directly
-    const response = await fetch('http://localhost:18239/chat', {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -245,7 +245,7 @@ async function pollForResult(jobUrl: string) {
 
   while (attempts < maxAttempts) {
     try {
-      const response = await fetch(`http://localhost:18239${jobUrl}`)
+      const response = await fetch(`/api${jobUrl}`)
       const data = await response.json()
 
       if (data.status === 'completed') {

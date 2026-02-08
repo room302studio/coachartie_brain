@@ -1,5 +1,5 @@
 <template>
-  <div class="font-mono border-r border-primary h-full p-0.5 bg-white dark:bg-black text-gray-900 dark:text-white">
+  <div class="font-mono border-r border-primary h-full p-0.5 dark:bg-black text-gray-900 dark:text-white">
     <!-- Status indicators -->
     <div class="border-b border-secondary pb-0.5 mb-1">
       <div class="flex items-center justify-between">

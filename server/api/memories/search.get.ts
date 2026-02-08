@@ -1,6 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, getRawDb, memories } from '@coachartie/shared'
-import { like, and, gte, eq, desc } from 'drizzle-orm'
+import { getDb, getRawDb, memories, like, and, gte, eq, desc } from '@coachartie/shared'
 
 /**
  * Search endpoint for memories using LIKE fallback (FTS5 not always available)

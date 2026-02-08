@@ -1,6 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, messages } from '@coachartie/shared'
-import { ne, gte, count, max, min, desc, sql } from 'drizzle-orm'
+import { getDb, messages, ne, gte, count, max, min, desc, sql } from '@coachartie/shared'
 
 /**
  * Get top users by message count

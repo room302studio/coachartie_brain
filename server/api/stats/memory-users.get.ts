@@ -1,6 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, memories } from '@coachartie/shared'
-import { count, max, min, desc, sql } from 'drizzle-orm'
+import { getDb, memories, count, max, min, desc, sql } from '@coachartie/shared'
 
 /**
  * Get top users by memory count

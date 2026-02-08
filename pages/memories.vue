@@ -17,7 +17,7 @@
         <div class="p-2">
           <div class="flex flex-col gap-2">
             <!-- Memory Feed (Primary) -->
-            <div class="flex-grow border border-gray-300 dark:border-black bg-white dark:bg-black">
+            <div class="flex-grow border border-gray-300 dark:border-black dark:bg-black">
               <div class="p-1">
                 <div class="mb-1 border-b border-gray-300 dark:border-black pb-1 flex justify-between">
                   <span class="text-xs dark:text-white">MEMORY_FEED</span>
@@ -26,7 +26,7 @@
 
                 <div class="space-y-1 overflow-y-auto" style="height: 75vh;">
                   <div v-for="memory in visibleMemories" :key="memory.id" :id="`memory-${memory.id}`"
-                    class="border border-gray-300 dark:border-black mb-1 cursor-pointer memory-item bg-white dark:bg-black"
+                    class="border border-gray-300 dark:border-black mb-1 cursor-pointer memory-item dark:bg-black"
                     :class="{ 'border-gray-500 dark:border-white': selectedMemoryId === memory.id }"
                     @click="selectMemoryById(memory.id)">
                     <div class="flex items-center justify-between border-b border-gray-300 dark:border-black p-1">

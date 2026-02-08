@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen bg-white text-gray-900 dark:bg-black dark:text-white font-mono">
+  <div class="flex h-screen text-gray-900 dark:bg-black dark:text-white font-mono">
     <!-- SiteNav Component -->
     <div class="w-64 h-full border-r border-gray-300 dark:border-primary overflow-y-auto">
       <SiteNav />

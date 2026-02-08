@@ -35,7 +35,7 @@
           <label for="sort-select" class="mr-2 text-sm font-medium dark:text-gray-300">Sort by:</label>
           <div class="relative group">
             <select id="sort-select" v-model="selectedSort" v-highlight-selected
-              class="pl-9 pr-8 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
+              class="pl-9 pr-8 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
               aria-label="Sort queue items">
               <option v-for="option in sortOptions" :key="option.value" :value="option.value">
                 {{ option.label }}

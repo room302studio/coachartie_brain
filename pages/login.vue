@@ -6,14 +6,14 @@ const signInWithOtp = async () => {
   const { error } = await supabase.auth.signInWithOtp({
     email: email.value,
     options: {
-      emailRedirectTo: 'http://localhost:3000/confirm',
+      emailRedirectTo: `${window.location.origin}/confirm`,
     }
   })
   if (error) console.log(error)
 }
 </script>
 <template>
-  <div class="max-w-screen-md mx-auto mt-12 p-6 bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded shadow-sm">
+  <div class="max-w-screen-md mx-auto mt-12 p-6 dark:bg-black border border-gray-300 dark:border-gray-800 rounded shadow-sm">
     <h1 class="text-lg mb-6 text-gray-900 dark:text-white">COACH_ARTIE_LOGIN</h1>
     
     <div class="flex flex-col space-y-4">

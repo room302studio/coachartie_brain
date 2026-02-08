@@ -5,8 +5,7 @@
  */
 
 import { defineEventHandler } from 'h3'
-import { getDb, prompts, promptHistory } from '@coachartie/shared'
-import { desc, eq } from 'drizzle-orm'
+import { getDb, prompts, promptHistory, desc, eq } from '@coachartie/shared'
 
 export default defineEventHandler(async () => {
   try {

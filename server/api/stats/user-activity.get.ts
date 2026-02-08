@@ -1,6 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, messages, memories, meetings } from '@coachartie/shared'
-import { eq, count, min, max, avg, desc, isNotNull, sql } from 'drizzle-orm'
+import { getDb, messages, memories, meetings, eq, count, min, max, avg, desc, isNotNull, sql } from '@coachartie/shared'
 
 /**
  * Get activity statistics for a specific user

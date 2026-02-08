@@ -1,6 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { getDb, memories } from '@coachartie/shared'
-import { gte, count, avg, max, desc, isNotNull, ne, sql } from 'drizzle-orm'
+import { getDb, memories, gte, count, avg, max, desc, isNotNull, ne, sql } from '@coachartie/shared'
 
 /**
  * Get trending topics in memories by analyzing tags and content

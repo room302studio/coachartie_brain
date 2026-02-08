@@ -19,7 +19,7 @@
           <!-- Messages and Latest Log -->
           <div>
             <div
-              class="border border-gray-300 dark:border-black mb-2 dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
+              class="border border-gray-300 dark:border-black mb-2 dashboard-section dark:bg-black rounded-md shadow-sm dark:shadow-none">
               <div class="section-title">MESSAGES</div>
               <div class="p-2">
                 <MessagesView />
@@ -27,7 +27,7 @@
             </div>
 
             <div
-              class="border border-gray-300 dark:border-black dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
+              class="border border-gray-300 dark:border-black dashboard-section dark:bg-black rounded-md shadow-sm dark:shadow-none">
               <div class="section-title">LATEST LOG</div>
               <div class="p-2">
                 <LatestLog />
@@ -38,7 +38,7 @@
           <!-- Memories, To-Do Lists, and Sparklines -->
           <div>
             <div
-              class="border border-gray-300 dark:border-black mb-2 dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
+              class="border border-gray-300 dark:border-black mb-2 dashboard-section dark:bg-black rounded-md shadow-sm dark:shadow-none">
               <div class="section-title">MEMORIES</div>
               <div class="p-2">
                 <MemoriesView />
@@ -46,7 +46,7 @@
             </div>
 
             <div
-              class="border border-gray-300 dark:border-black dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
+              class="border border-gray-300 dark:border-black dashboard-section dark:bg-black rounded-md shadow-sm dark:shadow-none">
               <div class="section-title">DATA OVERVIEW</div>
               <div class="p-2">
                 <TableOverviewSparklines />
@@ -57,7 +57,7 @@
 
         <!-- Network Graph Section -->
         <div
-          class="mt-2 border border-gray-300 dark:border-black dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none relative z-10">
+          class="mt-2 border border-gray-300 dark:border-black dashboard-section dark:bg-black rounded-md shadow-sm dark:shadow-none relative z-10">
           <div class="section-title">NETWORK GRAPH</div>
           <div class="p-2">
             <NetworkGraph />

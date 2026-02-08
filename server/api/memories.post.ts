@@ -1,6 +1,5 @@
 import { defineEventHandler, readBody } from 'h3'
-import { getDb, memories } from '@coachartie/shared'
-import { eq } from 'drizzle-orm'
+import { getDb, memories, eq } from '@coachartie/shared'
 
 export default defineEventHandler(async (event) => {
   try {
