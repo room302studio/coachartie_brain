@@ -78,7 +78,6 @@ function createBezierPath(
   start: { x: number; y: number },
   end: { x: number; y: number }
 ): string {
-  const midX = (start.x + end.x) / 2
   const controlOffset = Math.abs(end.x - start.x) * 0.6
 
   // Control points for smooth S-curve
@@ -105,7 +104,9 @@ function getRelativeBounds(element: Element, svgContainer: Element): DOMRect {
 
 // Find all connections between messages and memories
 function findConnections(): Connection[] {
-  if (!svgRef.value) return []
+  if (!svgRef.value) {
+    return []
+  }
 
   const messageElements = document.querySelectorAll('[data-message-id]')
   const memoryElements = document.querySelectorAll('[data-memory-id]')
@@ -224,7 +225,9 @@ function findConnections(): Connection[] {
 
 // Update SVG dimensions to match container
 function updateDimensions() {
-  if (!svgRef.value) return
+  if (!svgRef.value) {
+    return
+  }
 
   const parentElement = svgRef.value.parentElement
   if (parentElement) {
@@ -246,7 +249,9 @@ function animate() {
 
 // Start animation
 function startAnimation() {
-  if (animationFrameId) return
+  if (animationFrameId) {
+    return
+  }
   animate()
 }
 

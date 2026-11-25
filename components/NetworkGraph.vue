@@ -15,7 +15,7 @@
           [SPREAD]
         </button>
         <button @click="toggleSimulation" class="text-[10px] text-tertiary font-mono mr-1 px-0.5 hover:text-secondary">
-          [{{ simulationRunning ? 'PAUSE' : 'PLAY' }}]
+          [<span v-if="simulationRunning">PAUSE</span><span v-else>PLAY</span>]
         </button>
         <button @click="resetZoom" class="text-[10px] text-tertiary font-mono px-0.5 hover:text-secondary">
           [RESET]
@@ -52,7 +52,8 @@
       <!-- Info box for displaying hovered node details -->
       <div class="mt-1 border-t border-secondary pt-1">
         <div class="text-[10px] text-tertiary flex justify-between">
-          <span>{{ hoveredNode ? hoveredNode.type.toUpperCase() : 'NODE INFO' }}</span>
+          <span v-if="hoveredNode">{{ hoveredNode.type.toUpperCase() }}</span>
+          <span v-else>NODE INFO</span>
           <span v-if="hoveredNode" class="text-[8px] text-quaternary">ID: {{ hoveredNode.id }}</span>
         </div>
         <div class="h-[80px] overflow-auto bg-gray-900/20 p-1 mt-0.5 font-mono text-[10px]">
@@ -228,8 +229,14 @@ async function fetchUsers() {
       messagesResponse.json()
     ])
 
-    const memoryUsers = memoriesData.success && memoriesData.data ? memoriesData.data : []
-    const messageUsers = messagesData.success && messagesData.data ? messagesData.data : []
+    let memoryUsers = []
+    if (memoriesData.success && memoriesData.data) {
+      memoryUsers = memoriesData.data
+    }
+    let messageUsers = []
+    if (messagesData.success && messagesData.data) {
+      messageUsers = messagesData.data
+    }
 
     // Combine and deduplicate users
     const allUsers = [...memoryUsers, ...messageUsers]
@@ -240,6 +247,13 @@ async function fetchUsers() {
     console.error('Exception fetching users:', error)
     return []
   }
+}
+
+function mockRelatedMessageId(messageCount) {
+  if (Math.random() > 0.5) {
+    return `message-${Math.floor(Math.random() * messageCount)}`
+  }
+  return null
 }
 
 function generateMockData() {
@@ -261,7 +275,7 @@ function generateMockData() {
     value: `Memory ${i}`,
     user_id: `user-${Math.floor(Math.random() * userCount)}`,
     created_at: new Date().toISOString(),
-    related_message_id: Math.random() > 0.5 ? `message-${Math.floor(Math.random() * messageCount)}` : null
+    related_message_id: mockRelatedMessageId(messageCount)
   }))
 
   // Create mock messages
@@ -347,7 +361,9 @@ function createNetworkData(memories = [], messages = [], users = []) {
 
     // Memory to message links - only if both nodes exist
     for (const memory of memories) {
-      if (newLinks.length >= maxLinks) break
+      if (newLinks.length >= maxLinks) {
+        break
+      }
 
       if (memory.related_message_id) {
         const sourceId = `memory-${memory.id}`
@@ -367,7 +383,9 @@ function createNetworkData(memories = [], messages = [], users = []) {
 
     // Memory to user links - only if both nodes exist and we're under the limit
     for (const memory of memories) {
-      if (newLinks.length >= maxLinks) break
+      if (newLinks.length >= maxLinks) {
+        break
+      }
 
       if (memory.user_id) {
         const sourceId = `memory-${memory.id}`
@@ -387,7 +405,9 @@ function createNetworkData(memories = [], messages = [], users = []) {
 
     // Message to user links - only if both nodes exist and we're under the limit
     for (const message of messages) {
-      if (newLinks.length >= maxLinks) break
+      if (newLinks.length >= maxLinks) {
+        break
+      }
 
       if (message.user_id) {
         const sourceId = `message-${message.id}`
@@ -419,7 +439,9 @@ function createNetworkData(memories = [], messages = [], users = []) {
     // Create LIMITED links between memories in the same conversation
     // Instead of all pairs, create a chain or a limited number of connections
     Object.values(conversationGroups).forEach(group => {
-      if (newLinks.length >= maxLinks) return
+      if (newLinks.length >= maxLinks) {
+        return
+      }
 
       // Sort memories by created_at if available
       if (group.memories[0]?.created_at) {
@@ -430,7 +452,9 @@ function createNetworkData(memories = [], messages = [], users = []) {
 
       // Create chain links (connect sequential memories) instead of all-to-all
       for (let i = 0; i < group.memories.length - 1; i++) {
-        if (newLinks.length >= maxLinks) break
+        if (newLinks.length >= maxLinks) {
+          break
+        }
 
         const sourceId = `memory-${group.memories[i].id}`
         const targetId = `memory-${group.memories[i + 1].id}`
@@ -587,7 +611,9 @@ function renderNetwork() {
 // Drag behavior
 function drag(simulation) {
   function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart()
+    if (!event.active) {
+      simulation.alphaTarget(0.3).restart()
+    }
     d.fx = d.x
     d.fy = d.y
   }
@@ -598,7 +624,9 @@ function drag(simulation) {
   }
 
   function dragended(event, d) {
-    if (!event.active) simulation.alphaTarget(0)
+    if (!event.active) {
+      simulation.alphaTarget(0)
+    }
     d.fx = null
     d.fy = null
   }
@@ -636,7 +664,8 @@ function ticked() {
 }
 
 // Helper functions
-function getNodeRadius(node) {
+// Unused as of 2026-11-23 (lint pass); kept for reference.
+function _getNodeRadius(node) {
   switch (node.type) {
     case 'memory':
       return 6
@@ -662,7 +691,8 @@ function getNodeColor(node) {
   }
 }
 
-function getLinkColor(link) {
+// Unused as of 2026-11-23 (lint pass); kept for reference.
+function _getLinkColor(link) {
   switch (link.type) {
     case 'memory-message':
       return 'rgba(20, 184, 166, 0.6)' // teal with opacity
@@ -678,13 +708,18 @@ function getLinkColor(link) {
 }
 
 function truncateText(text, maxLength) {
-  if (!text) return 'N/A'
-  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
+  if (!text) {
+    return 'N/A'
+  }
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength) + '...'
+  }
+  return text
 }
 
 function toggleSimulation() {
   simulationRunning.value = !simulationRunning.value
-  console.log(`Simulation ${simulationRunning.value ? 'started' : 'paused'}`)
+  console.log(`Simulation ${simulationStateLabel()}`)
 
   if (simulationRunning.value) {
     // Release fixed positions when starting simulation
@@ -712,7 +747,9 @@ function toggleSimulation() {
 }
 
 function resetZoom() {
-  if (!svg || !zoom) return
+  if (!svg || !zoom) {
+    return
+  }
 
   svg.transition()
     .duration(750)
@@ -721,7 +758,9 @@ function resetZoom() {
 
 function spreadNodes() {
   console.log('Spreading nodes')
-  if (!simulation || !networkRef.value) return
+  if (!simulation || !networkRef.value) {
+    return
+  }
 
   const width = networkRef.value.clientWidth
   const height = networkRef.value.clientHeight
@@ -739,9 +778,15 @@ function spreadNodes() {
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('charge', d3.forceManyBody().strength(-300)) // Stronger repulsion for spreading
     .force('collision', d3.forceCollide().radius(d => {
-      if (d.type === 'user') return 20
-      if (d.type === 'memory') return 15
-      if (d.type === 'message') return 12
+      if (d.type === 'user') {
+        return 20
+      }
+      if (d.type === 'memory') {
+        return 15
+      }
+      if (d.type === 'message') {
+        return 12
+      }
       return 15
     }))
     .alpha(1) // High alpha for more movement
@@ -753,9 +798,15 @@ function spreadNodes() {
       simulation
         .force('charge', d3.forceManyBody().strength(-150))
         .force('collision', d3.forceCollide().radius(d => {
-          if (d.type === 'user') return 12
-          if (d.type === 'memory') return 10
-          if (d.type === 'message') return 8
+          if (d.type === 'user') {
+            return 12
+          }
+          if (d.type === 'memory') {
+            return 10
+          }
+          if (d.type === 'message') {
+            return 8
+          }
           return 10
         }))
         .alpha(0.3)
@@ -782,17 +833,17 @@ function applyFilter() {
     }
 
     // Filter nodes
-    nodeElements.style('display', d => d.type === currentFilter ? null : 'none')
+    nodeElements.style('display', d => displayIf(d.type === currentFilter))
 
     // Filter links
     linkElements.style('display', d => {
-      const sourceType = typeof d.source === 'object' ? d.source.type : d.source.split('-')[0]
-      const targetType = typeof d.target === 'object' ? d.target.type : d.target.split('-')[0]
-      return sourceType === currentFilter || targetType === currentFilter ? null : 'none'
+      const sourceType = endpointType(d.source)
+      const targetType = endpointType(d.target)
+      return displayIf(sourceType === currentFilter || targetType === currentFilter)
     })
 
     // Filter text
-    textElements.style('display', d => d.type === currentFilter ? null : 'none')
+    textElements.style('display', d => displayIf(d.type === currentFilter))
 
     // Restart simulation
     if (simulationRunning.value && simulation) {
@@ -811,7 +862,7 @@ watch(filter, () => {
 // Lifecycle hooks
 onMounted(() => {
   console.log('NetworkGraph mounted')
-  refreshData()
+  void refreshData()
   window.addEventListener('resize', handleResize)
 })
 
@@ -908,8 +959,8 @@ function renderNetworkWithHardcodedNodes() {
           ...node,
           x: width * 0.15,
           y,
-          fx: simulationRunning.value ? null : width * 0.15, // Fixed x if not simulating
-          fy: simulationRunning.value ? null : y // Fixed y if not simulating
+          fx: pinnedUnlessRunning(width * 0.15), // Fixed x if not simulating
+          fy: pinnedUnlessRunning(y) // Fixed y if not simulating
         })
       })
 
@@ -926,8 +977,8 @@ function renderNetworkWithHardcodedNodes() {
           ...node,
           x,
           y,
-          fx: simulationRunning.value ? null : x, // Fixed x if not simulating
-          fy: simulationRunning.value ? null : y // Fixed y if not simulating
+          fx: pinnedUnlessRunning(x), // Fixed x if not simulating
+          fy: pinnedUnlessRunning(y) // Fixed y if not simulating
         })
       })
 
@@ -944,8 +995,8 @@ function renderNetworkWithHardcodedNodes() {
           ...node,
           x,
           y,
-          fx: simulationRunning.value ? null : x, // Fixed x if not simulating
-          fy: simulationRunning.value ? null : y // Fixed y if not simulating
+          fx: pinnedUnlessRunning(x), // Fixed x if not simulating
+          fy: pinnedUnlessRunning(y) // Fixed y if not simulating
         })
       })
 
@@ -973,13 +1024,19 @@ function renderNetworkWithHardcodedNodes() {
         .attr('class', 'data-link')
         .attr('stroke', d => {
           // Different colors for different link types
-          if (d.type === 'memory-message') return 'rgba(20, 184, 166, 0.4)' // teal
-          if (d.type === 'memory-user') return 'rgba(168, 85, 247, 0.4)' // purple 
-          if (d.type === 'message-user') return 'rgba(59, 130, 246, 0.4)' // blue
+          if (d.type === 'memory-message') {
+            return 'rgba(20, 184, 166, 0.4)' // teal
+          }
+          if (d.type === 'memory-user') {
+            return 'rgba(168, 85, 247, 0.4)' // purple
+          }
+          if (d.type === 'message-user') {
+            return 'rgba(59, 130, 246, 0.4)' // blue
+          }
           return 'rgba(156, 163, 175, 0.2)' // gray
         })
         .attr('stroke-width', 1)
-        .attr('stroke-dasharray', d => d.type === 'conversation' ? '3,2' : null)
+        .attr('stroke-dasharray', linkDash)
 
       // Add nodes
       nodeElements = container.append('g')
@@ -990,9 +1047,15 @@ function renderNetworkWithHardcodedNodes() {
         .attr('class', 'data-node')
         .attr('r', d => {
           // Different sizes for different node types
-          if (d.type === 'user') return 8
-          if (d.type === 'memory') return 6
-          if (d.type === 'message') return 5
+          if (d.type === 'user') {
+            return 8
+          }
+          if (d.type === 'memory') {
+            return 6
+          }
+          if (d.type === 'message') {
+            return 5
+          }
           return 5
         })
         .attr('fill', d => getNodeColor(d))
@@ -1007,9 +1070,15 @@ function renderNetworkWithHardcodedNodes() {
           d3.select(this)
             .attr('opacity', 1)
             .attr('r', d => {
-              if (d.type === 'user') return 10
-              if (d.type === 'memory') return 8
-              if (d.type === 'message') return 7
+              if (d.type === 'user') {
+                return 10
+              }
+              if (d.type === 'memory') {
+                return 8
+              }
+              if (d.type === 'message') {
+                return 7
+              }
               return 7
             })
 
@@ -1031,9 +1100,15 @@ function renderNetworkWithHardcodedNodes() {
           d3.select(this)
             .attr('opacity', 0.8)
             .attr('r', d => {
-              if (d.type === 'user') return 8
-              if (d.type === 'memory') return 6
-              if (d.type === 'message') return 5
+              if (d.type === 'user') {
+                return 8
+              }
+              if (d.type === 'memory') {
+                return 6
+              }
+              if (d.type === 'message') {
+                return 5
+              }
               return 5
             })
 
@@ -1053,13 +1128,19 @@ function renderNetworkWithHardcodedNodes() {
         .attr('class', 'data-label')
         .attr('text-anchor', 'middle')
         .attr('fill', 'white')
-        .attr('font-size', d => d.type === 'user' ? '9px' : '7px')
-        .attr('opacity', d => d.type === 'user' ? 0.9 : 0.4)
+        .attr('font-size', labelFontSize)
+        .attr('opacity', labelOpacity)
         .style('pointer-events', 'none')
         .text(d => {
-          if (d.type === 'user') return `User: ${d.data.id.substring(0, 6)}`
-          if (d.type === 'memory') return truncateText(d.data.value, 15)
-          if (d.type === 'message') return truncateText(d.data.value || d.data.content, 15)
+          if (d.type === 'user') {
+            return `User: ${d.data.id.substring(0, 6)}`
+          }
+          if (d.type === 'memory') {
+            return truncateText(d.data.value, 15)
+          }
+          if (d.type === 'message') {
+            return truncateText(d.data.value || d.data.content, 15)
+          }
           return d.label?.substring(0, 10) || 'N/A'
         })
 
@@ -1070,10 +1151,18 @@ function renderNetworkWithHardcodedNodes() {
           .links(simulationLinks)
           .distance(d => {
             // Different distances for different link types
-            if (d.type === 'memory-message') return 60
-            if (d.type === 'memory-user') return 80
-            if (d.type === 'message-user') return 70
-            if (d.type === 'conversation') return 40
+            if (d.type === 'memory-message') {
+              return 60
+            }
+            if (d.type === 'memory-user') {
+              return 80
+            }
+            if (d.type === 'message-user') {
+              return 70
+            }
+            if (d.type === 'conversation') {
+              return 40
+            }
             return 50
           })
         )
@@ -1082,9 +1171,15 @@ function renderNetworkWithHardcodedNodes() {
         .force('x', d3.forceX(width / 2).strength(0.05))
         .force('y', d3.forceY(height / 2).strength(0.05))
         .force('collision', d3.forceCollide().radius(d => {
-          if (d.type === 'user') return 12
-          if (d.type === 'memory') return 10
-          if (d.type === 'message') return 8
+          if (d.type === 'user') {
+            return 12
+          }
+          if (d.type === 'memory') {
+            return 10
+          }
+          if (d.type === 'message') {
+            return 8
+          }
           return 10
         }))
 
@@ -1105,7 +1200,7 @@ function renderNetworkWithHardcodedNodes() {
 
         textElements
           .attr('x', d => d.x)
-          .attr('y', d => d.y + (d.type === 'user' ? 16 : 12))
+          .attr('y', d => d.y + labelOffsetY(d))
       })
 
       // Start or stop simulation based on state
@@ -1137,9 +1232,71 @@ function renderNetworkWithHardcodedNodes() {
 }
 
 function formatMemoryValue(value) {
-  if (!value) return 'N/A'
+  if (!value) {
+    return 'N/A'
+  }
   // Remove "CLUSTER:NONE" or similar text patterns
   return value.replace(/\bCLUSTER:NONE\b/gi, '').replace(/\bCLUSTER:\s*$/gi, '').trim()
+}
+
+// Link endpoint type: object endpoints carry .type, string endpoints are "type-id"
+function endpointType(endpoint) {
+  if (typeof endpoint === 'object') {
+    return endpoint.type
+  }
+  return endpoint.split('-')[0]
+}
+
+// Named decisions (house rule: no ternaries, and no generic iff(cond, a, b) helper).
+function simulationStateLabel() {
+  if (simulationRunning.value) {
+    return 'started'
+  }
+  return 'paused'
+}
+
+/** d3 display value: shown (null) when it matches the filter, hidden otherwise. */
+function displayIf(matches) {
+  if (matches) {
+    return null
+  }
+  return 'none'
+}
+
+/** Fixed coordinate while the simulation is paused; free (null) while it runs. */
+function pinnedUnlessRunning(value) {
+  if (simulationRunning.value) {
+    return null
+  }
+  return value
+}
+
+function linkDash(d) {
+  if (d.type === 'conversation') {
+    return '3,2'
+  }
+  return null
+}
+
+function labelFontSize(d) {
+  if (d.type === 'user') {
+    return '9px'
+  }
+  return '7px'
+}
+
+function labelOpacity(d) {
+  if (d.type === 'user') {
+    return 0.9
+  }
+  return 0.4
+}
+
+function labelOffsetY(d) {
+  if (d.type === 'user') {
+    return 16
+  }
+  return 12
 }
 </script>
 

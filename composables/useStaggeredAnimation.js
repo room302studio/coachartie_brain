@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 
 export function useStaggeredAnimation() {
   const animatedItems = ref([])
@@ -12,7 +12,9 @@ export function useStaggeredAnimation() {
     // Super simplified animation - just basic fade in with stagger
     const targets = document.querySelectorAll(selector)
 
-    if (targets.length === 0) return
+    if (targets.length === 0) {
+      return
+    }
 
     // Make visible
     targets.forEach((el) => {

@@ -1,13 +1,8 @@
 <template>
   <div class="text-gray-900 dark:text-white">
     <div class="flex">
-      <!-- Site Navigation Sidebar -->
-      <div class="w-52 min-h-screen">
-        <SiteNav />
-      </div>
-
-      <!-- Main Content -->
-      <div class="flex-1 p-4">
+      <!-- Main Content (SiteNav comes from the 'main' layout, like every other page) -->
+      <div class="flex-1">
         <div class="mb-2 border-b border-gray-300 dark:border-black pb-1 flex justify-between items-center">
           <span class="text-base">MEMORIES</span>
           <input v-model="searchQuery" placeholder="SEARCH"
@@ -64,8 +59,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { format } from 'date-fns'
-// // import { useSupabaseClient } from '#imports'
-import SiteNav from '~/components/SiteNav.vue'
+
+definePageMeta({ layout: 'main' })
 
 // Basic state
 const memories = ref([])
@@ -80,6 +75,13 @@ function formatDate(timestamp) {
   return format(new Date(timestamp), 'MM-dd-yy HH:mm:ss')
 }
 
+function memoryTypeFor(tags) {
+  if (tags) {
+    return 'tagged'
+  }
+  return 'general'
+}
+
 // Fetch memories from the database
 async function fetchMemories() {
   try {
@@ -90,7 +92,7 @@ async function fetchMemories() {
       memories.value = result.data.map(m => ({
         ...m,
         value: m.content, // Use content field
-        memory_type: m.tags ? 'tagged' : 'general' // Add memory_type for display
+        memory_type: memoryTypeFor(m.tags) // Add memory_type for display
       }))
     }
   } catch (error) {
@@ -100,7 +102,11 @@ async function fetchMemories() {
 
 // Select a memory by ID
 function selectMemoryById(memoryId) {
-  selectedMemoryId.value = memoryId === selectedMemoryId.value ? null : memoryId
+  if (memoryId === selectedMemoryId.value) {
+    selectedMemoryId.value = null
+  } else {
+    selectedMemoryId.value = memoryId
+  }
 }
 
 // Filtered memories based on search query
@@ -139,7 +145,7 @@ function setupRealtimeSubscription() {
 
 // Initialize page
 onMounted(() => {
-  fetchMemories()
+  void fetchMemories()
   setupRealtimeSubscription()
 })
 </script>

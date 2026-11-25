@@ -50,11 +50,18 @@ const props = defineProps({
 })
 
 // Margins for the chart
+function axisSize(withAxis, size) {
+  if (withAxis) {
+    return size
+  }
+  return 2
+}
+
 const margin = {
   top: 2,
   right: 2,
-  bottom: props.showAxis ? 12 : 2,
-  left: props.showAxis ? 20 : 2
+  bottom: axisSize(props.showAxis, 12),
+  left: axisSize(props.showAxis, 20)
 }
 
 // Computed inner dimensions
@@ -68,9 +75,10 @@ function isDarkMode() {
 
 // Colors for light and dark mode
 function getAxisColor() {
-  return isDarkMode() 
-    ? 'rgba(255, 255, 255, 0.3)' // Dark mode
-    : 'rgba(0, 0, 0, 0.3)';      // Light mode
+  if (isDarkMode()) {
+    return 'rgba(255, 255, 255, 0.3)' // Dark mode
+  }
+  return 'rgba(0, 0, 0, 0.3)' // Light mode
 }
 
 // Refs
@@ -82,8 +90,10 @@ watch(() => isDarkMode(), renderSparkline)
 
 // Render sparkline
 function renderSparkline() {
-  if (!sparklineRef.value || !props.data.length) return
-  
+  if (!sparklineRef.value || !props.data.length) {
+    return
+  }
+
   // Clear previous chart
   d3.select(sparklineRef.value).selectAll('*').remove()
   

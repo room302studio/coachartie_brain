@@ -50,7 +50,7 @@ interface StatusData extends TimeSeriesData, MemoryDistributions {
 /**
  * API endpoint that returns real usage stats from the database
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (_event) => {
   try {
     const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
     const db = await open({
@@ -67,23 +67,23 @@ export default defineEventHandler(async (event) => {
     
     try {
       memoryCountResult = await db.get('SELECT COUNT(*) as count FROM memories')
-    } catch (e) { }
-    
+    } catch { }
+
     try {
       messageCountResult = await db.get('SELECT COUNT(*) as count FROM messages')
-    } catch (e) { }
-    
+    } catch { }
+
     try {
       queueCountResult = await db.get('SELECT COUNT(*) as count FROM queue')
-    } catch (e) { }
-    
+    } catch { }
+
     try {
       todoCountResult = await db.get('SELECT COUNT(*) as count FROM todos')
-    } catch (e) { }
-    
+    } catch { }
+
     try {
       configCountResult = await db.get('SELECT COUNT(*) as count FROM config')
-    } catch (e) { }
+    } catch { }
     
     // Get memory type distribution (using tags since memory_type doesn't exist)
     const memoryTypesResult = await db.all(`
@@ -107,7 +107,9 @@ export default defineEventHandler(async (event) => {
       SELECT COUNT(*) as count FROM memories 
       WHERE datetime(created_at) >= datetime('now', '-1 day')
     `)
-    if (todayCount?.count > 0) memoryAgeData.push({ name: 'Today', count: todayCount.count })
+    if (todayCount?.count > 0) {
+      memoryAgeData.push({ name: 'Today', count: todayCount.count })
+    }
     
     // 1-7 days
     const weekCount = await db.get(`
@@ -115,7 +117,9 @@ export default defineEventHandler(async (event) => {
       WHERE datetime(created_at) >= datetime('now', '-7 days')
       AND datetime(created_at) < datetime('now', '-1 day')
     `)
-    if (weekCount?.count > 0) memoryAgeData.push({ name: '1-7 days', count: weekCount.count })
+    if (weekCount?.count > 0) {
+      memoryAgeData.push({ name: '1-7 days', count: weekCount.count })
+    }
     
     // 1-4 weeks
     const monthCount = await db.get(`
@@ -123,14 +127,18 @@ export default defineEventHandler(async (event) => {
       WHERE datetime(created_at) >= datetime('now', '-28 days')
       AND datetime(created_at) < datetime('now', '-7 days')
     `)
-    if (monthCount?.count > 0) memoryAgeData.push({ name: '1-4 weeks', count: monthCount.count })
+    if (monthCount?.count > 0) {
+      memoryAgeData.push({ name: '1-4 weeks', count: monthCount.count })
+    }
     
     // 3+ months
     const oldCount = await db.get(`
       SELECT COUNT(*) as count FROM memories 
       WHERE datetime(created_at) < datetime('now', '-28 days')
     `)
-    if (oldCount?.count > 0) memoryAgeData.push({ name: '3+ months', count: oldCount.count })
+    if (oldCount?.count > 0) {
+      memoryAgeData.push({ name: '3+ months', count: oldCount.count })
+    }
     
     // Get time series data for last 24 hours
     const last24Hours = await db.all(`
@@ -166,7 +174,7 @@ export default defineEventHandler(async (event) => {
     }))
     
     // Get message type distribution (if messages table exists)
-    let messageTypes: MessageTypes = { email: 0, chat: 0, other: 0 }
+    const messageTypes: MessageTypes = { email: 0, chat: 0, other: 0 }
     try {
       const messageTypesResult = await db.all(`
         SELECT 
@@ -177,16 +185,20 @@ export default defineEventHandler(async (event) => {
       `)
       
       messageTypesResult.forEach(row => {
-        if (row.type === 'email') messageTypes.email = row.count
-        else if (row.type === 'chat') messageTypes.chat = row.count
-        else messageTypes.other += row.count
+        if (row.type === 'email') {
+          messageTypes.email = row.count
+        } else if (row.type === 'chat') {
+          messageTypes.chat = row.count
+        } else {
+          messageTypes.other += row.count
+        }
       })
-    } catch (e) {
+    } catch {
       // Messages table might not exist
     }
     
     // Get queue status (if queue table exists)
-    let queueStatus: QueueStatus = { completed: 0, error: 0 }
+    const queueStatus: QueueStatus = { completed: 0, error: 0 }
     try {
       const completedCount = await db.get(`
         SELECT COUNT(*) as count FROM queue 
@@ -199,7 +211,7 @@ export default defineEventHandler(async (event) => {
       
       queueStatus.completed = completedCount?.count || 0
       queueStatus.error = errorCount?.count || 0
-    } catch (e) {
+    } catch {
       // Queue table might not exist
     }
     

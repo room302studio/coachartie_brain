@@ -1,13 +1,8 @@
 <template>
   <div class="text-gray-900 dark:text-white">
     <div class="flex">
-      <!-- Site Navigation Sidebar -->
-      <div class="w-52 min-h-screen">
-        <SiteNav />
-      </div>
-
-      <!-- Main Content -->
-      <div class="flex-1 p-4 relative">
+      <!-- Main Content (the 'main' layout already draws SiteNav; this page drew a second one) -->
+      <div class="flex-1 relative">
         <div class="mb-2 border-b border-gray-300 dark:border-black pb-1">
           <span class="text-base font-medium text-gray-900 dark:text-white">DASHBOARD</span>
         </div>
@@ -16,21 +11,13 @@
         <ConnectionLayer />
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 relative z-10">
-          <!-- Messages and Latest Log -->
+          <!-- Messages (LATEST LOG removed 2026-11-21: it only listed in-page events, never Artie's logs) -->
           <div>
             <div
               class="border border-gray-300 dark:border-black mb-2 dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
               <div class="section-title">MESSAGES</div>
               <div class="p-2">
                 <MessagesView />
-              </div>
-            </div>
-
-            <div
-              class="border border-gray-300 dark:border-black dashboard-section bg-white dark:bg-black rounded-md shadow-sm dark:shadow-none">
-              <div class="section-title">LATEST LOG</div>
-              <div class="p-2">
-                <LatestLog />
               </div>
             </div>
           </div>
@@ -69,11 +56,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import SiteNav from '~/components/SiteNav.vue'
+import { onMounted } from 'vue'
 import MessagesView from '~/components/MessagesView.vue'
 import MemoriesView from '~/components/MemoriesView.vue'
-import LatestLog from '~/components/LatestLog.vue'
 import TableOverviewSparklines from '~/components/TableOverviewSparklines.vue'
 import NetworkGraph from '~/components/NetworkGraph.vue'
 import ConnectionLayer from '~/components/ConnectionLayer.vue'
@@ -88,7 +73,8 @@ definePageMeta({
 const { animateStaggered } = useStaggeredAnimation()
 
 // Function to refresh all data
-function refreshData() {
+// Unused as of 2026-11-23 (lint pass); kept for reference.
+function _refreshData() {
   // Dispatch a custom event for components to listen to
   window.dispatchEvent(new CustomEvent('refresh-data'))
 

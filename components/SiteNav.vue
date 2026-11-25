@@ -5,22 +5,16 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <div class="w-1.5 h-1.5 rounded-full mr-1"
-            :class="connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'">
+            :class="statusDotClass()">
           </div>
           <span class="text-[10px] text-gray-700 dark:text-tertiary">{{ connectionStatus.toUpperCase() }}</span>
         </div>
         <div class="text-[10px] text-gray-500 dark:text-quaternary">{{ currentTime }}</div>
       </div>
-      <div class="flex items-center mt-0.5">
-        <div class="w-1.5 h-1.5 rounded-full mr-1"
-          :class="systemStatus === 'ready' ? 'bg-green-500' : systemStatus === 'busy' ? 'bg-yellow-500' : 'bg-red-500'">
-        </div>
-        <span class="text-[10px] text-gray-700 dark:text-tertiary">{{ systemStatus.toUpperCase() }}</span>
-      </div>
     </div>
 
-    <!-- Quick stats -->
-    <div class="grid grid-cols-3 gap-0.5 border-b border-secondary pb-0.5 mb-1">
+    <!-- Quick stats (the QUEUE count went with the v3 cutover: there is no queue) -->
+    <div class="grid grid-cols-2 gap-0.5 border-b border-secondary pb-0.5 mb-1">
       <div class="text-center">
         <div class="text-[10px] text-gray-500 dark:text-quaternary">MEMORIES</div>
         <div class="text-[10px] text-gray-700 dark:text-secondary">{{ stats.memories }}</div>
@@ -28,10 +22,6 @@
       <div class="text-center">
         <div class="text-[10px] text-gray-500 dark:text-quaternary">MESSAGES</div>
         <div class="text-[10px] text-gray-700 dark:text-secondary">{{ stats.messages }}</div>
-      </div>
-      <div class="text-center">
-        <div class="text-[10px] text-gray-500 dark:text-quaternary">QUEUE</div>
-        <div class="text-[10px] text-gray-700 dark:text-secondary">{{ stats.queue }}</div>
       </div>
     </div>
 
@@ -44,42 +34,43 @@
       </NuxtLink>
     </div>
 
-    <!-- System info -->
-    <div class="text-[10px] text-gray-500 dark:text-quaternary">
-      <div class="flex justify-between">
-        <span>MODEL:</span>
-        <span class="text-gray-700 dark:text-tertiary">{{ systemInfo.model }}</span>
-      </div>
-      <div class="flex justify-between">
-        <span>TEMP:</span>
-        <span class="text-gray-700 dark:text-tertiary">{{ systemInfo.temperature }}</span>
-      </div>
-      <div class="flex justify-between">
-        <span>VERSION:</span>
-        <span class="text-gray-700 dark:text-tertiary">{{ systemInfo.version }}</span>
-      </div>
-    </div>
-
     <!-- Light/Dark Mode Toggle -->
     <div class="flex justify-between items-center mt-1 py-1 border-t border-secondary">
       <span class="text-[10px] text-gray-500 dark:text-quaternary">THEME:</span>
       <button @click="toggleDarkMode"
         class="text-[10px] text-gray-700 dark:text-tertiary hover:text-gray-900 dark:hover:text-secondary">
-        {{ isDarkMode ? 'LIGHT MODE' : 'DARK MODE' }}
+        <span v-if="isDarkMode">LIGHT MODE</span><span v-else>DARK MODE</span>
       </button>
     </div>
 
     <!-- Activity sparkline -->
     <div class="mt-1 border-t border-secondary pt-0.5">
       <div class="text-[10px] text-gray-500 dark:text-quaternary mb-0.5">ACTIVITY (24H)</div>
-      <EmbeddableSparkline :data="activityData" :height="20" :color="isDarkMode ? '#14B8A6' : '#0F766E'"
+      <EmbeddableSparkline :data="activityData" :height="20" :color="sparklineColor()"
         :show-axis="false" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted } from 'vue'
+
+function statusDotClass() {
+  if (connectionStatus.value === 'connected') {
+    return 'bg-green-500'
+  }
+  if (connectionStatus.value === 'connecting') {
+    return 'bg-yellow-500'
+  }
+  return 'bg-red-500'
+}
+
+function sparklineColor() {
+  if (isDarkMode.value) {
+    return '#14B8A6'
+  }
+  return '#0F766E'
+}
 import EmbeddableSparkline from '~/components/EmbeddableSparkline.vue'
 // // import { useSupabaseClient } from '#imports'
 
@@ -90,40 +81,23 @@ const isDarkMode = ref(true)
 
 // Reactive variables
 const connectionStatus = ref('disconnected')
-const systemStatus = ref('initializing')
 const currentTime = ref('')
 
-// Navigation links
+// Navigation links: only pages backed by real data (2026-11-21). Gone: CHAT (called a dead
+// localhost:18239 from the browser), MESSAGES and TODOS (no such pages), VISUALIZE and CONFIG
+// (read the empty useDatabase() stand-in left from the Supabase removal).
 const navLinks = [
   { path: '/', name: 'DASHBOARD' },
-  { path: '/debugChat', name: 'CHAT' },
   { path: '/memories', name: 'MEMORIES' },
-  { path: '/messages', name: 'MESSAGES' },
   { path: '/prompts', name: 'PROMPTS' },
-  { path: '/todos', name: 'TODOS' },
-  { path: '/visualizations', name: 'VISUALIZE' },
   { path: '/status', name: 'STATUS' },
-  { path: '/config', name: 'CONFIG' }
+  { path: '/spend', name: 'SPEND' }
 ]
 
 // Stats
 const stats = ref({
   memories: 0,
-  messages: 0,
-  queue: 0
-})
-
-// System info
-const systemInfo = ref({
-  model: 'Loading...',
-  temperature: '0.0',
-  version: '0.1.0'
-})
-
-// Config
-const config = ref({
-  default_model: '',
-  temperature: 0,
+  messages: 0
 })
 
 // Activity data
@@ -139,63 +113,6 @@ function toggleDarkMode() {
     document.documentElement.classList.remove('dark')
     localStorage.setItem('darkMode', 'light')
   }
-}
-
-// Fetch config from the database
-async function fetchConfig() {
-  // Temporarily disabled - needs migration from Supabase
-  return
-  /*
-  try {
-    const { data, error } = await supabase
-      .from('config')
-      .select('config_key, config_value, notes')
-
-    if (error) throw error
-
-    if (data && data.length > 0) {
-      // Process key-value pairs into config object
-      const configMap = {}
-      data.forEach(item => {
-        configMap[item.config_key] = item.config_value
-      })
-
-      // Update local config with values from database
-      config.value = {
-        default_model: configMap['default_model'] || 'gpt-3.5-turbo',
-        temperature: parseFloat(configMap['temperature'] || '0.7')
-      }
-
-      // Update systemInfo with real values
-      systemInfo.value.model = formatModelName(config.value.default_model)
-      systemInfo.value.temperature = config.value.temperature.toString()
-
-      // Update version if available
-      if (configMap['version']) {
-        systemInfo.value.version = configMap['version']
-      }
-    }
-  } catch (err) {
-    console.error('Error fetching config:', err)
-  }
-  */
-}
-
-// Format model name for display
-function formatModelName(model) {
-  if (!model) return 'Unknown'
-
-  // Convert model name to display format
-  const modelMap = {
-    'gpt-4': 'GPT-4',
-    'gpt-4-turbo': 'GPT-4 Turbo',
-    'gpt-3.5-turbo': 'GPT-3.5',
-    'claude-3-opus': 'Claude Opus',
-    'claude-3-sonnet': 'Claude Sonnet',
-    'claude-3-haiku': 'Claude Haiku'
-  }
-
-  return modelMap[model] || model
 }
 
 // Generate activity data for the sparkline
@@ -238,7 +155,8 @@ async function generateActivityData() {
 }
 
 // Process timestamps to hourly counts
-function processTimestampsToHourly(items, dateField) {
+// Unused as of 2026-11-23 (lint pass); kept for reference.
+function _processTimestampsToHourly(items, dateField) {
   // Create a map of the last 24 hours
   const hourlyMap = {}
   const now = new Date()
@@ -294,8 +212,7 @@ async function fetchStats() {
     
     stats.value = {
       memories: statusData.memoryCount || 0,
-      messages: statusData.messageCount || 0,
-      queue: statusData.queueCount || 0
+      messages: statusData.messageCount || 0
     }
   } catch (err) {
     console.error('Error fetching stats:', err)
@@ -312,27 +229,8 @@ async function checkConnectionStatus() {
     } else {
       connectionStatus.value = 'disconnected'
     }
-  } catch (e) {
+  } catch {
     connectionStatus.value = 'disconnected'
-  }
-}
-
-// Determine system status based on queue
-async function determineSystemStatus() {
-  try {
-    const response = await fetch('/api/queue/status')
-    const result = await response.json()
-
-    if (result.success && result.data) {
-      // Check if there are any processing items
-      const processingItems = result.data.filter(item => item.status === 'processing')
-      systemStatus.value = processingItems.length > 0 ? 'busy' : 'ready'
-    } else {
-      systemStatus.value = 'ready'
-    }
-  } catch (err) {
-    console.error('Error checking system status:', err)
-    systemStatus.value = 'error'
   }
 }
 
@@ -362,11 +260,9 @@ function setupVisibilityHandler() {
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        fetchStats()
-        fetchConfig()
-        checkConnectionStatus()
-        determineSystemStatus()
-        generateActivityData()
+        void fetchStats()
+        void checkConnectionStatus()
+        void generateActivityData()
       }
     })
   }
@@ -379,20 +275,17 @@ onMounted(() => {
 
   // Initial data loads
   updateTime()
-  fetchStats()
-  fetchConfig()
-  checkConnectionStatus()
-  determineSystemStatus()
-  generateActivityData()
+  void fetchStats()
+  void checkConnectionStatus()
+  void generateActivityData()
 
   // Set up handlers
   setupVisibilityHandler()
 
   // Set up intervals (less frequent than before to reduce API calls)
   setInterval(updateTime, 1000)
-  setInterval(fetchStats, 30000) // Every 30 seconds
-  setInterval(checkConnectionStatus, 60000) // Every minute
-  setInterval(determineSystemStatus, 60000) // Every minute
-  setInterval(generateActivityData, 300000) // Every 5 minutes
+  setInterval(() => { void fetchStats() }, 30000) // Every 30 seconds
+  setInterval(() => { void checkConnectionStatus() }, 60000) // Every minute
+  setInterval(() => { void generateActivityData() }, 300000) // Every 5 minutes
 })
 </script>

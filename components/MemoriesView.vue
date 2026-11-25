@@ -10,21 +10,21 @@
         </button>
         <button @click="showFilters = !showFilters"
           class="text-[10px] text-gray-700 dark:text-white font-mono mr-1 border-r border-gray-300 dark:border-black px-0.5 hover:text-gray-900 dark:hover:text-gray-300">
-          [{{ showFilters ? 'HIDE_FILTER' : 'FILTER' }}]
+          [<span v-if="showFilters">HIDE_FILTER</span><span v-else>FILTER</span>]
         </button>
         <span class="text-[10px] text-gray-700 dark:text-white">[{{ filteredMemories.length }}]</span>
       </div>
       <div>
         <button @click="memoriesToShow = 10" class="text-[10px] text-gray-700 dark:text-white font-mono px-0.5"
-          :class="memoriesToShow === 10 ? 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white' : ''">
+          :class="{ 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white': memoriesToShow === 10 }">
           10
         </button>
         <button @click="memoriesToShow = 25" class="text-[10px] text-gray-700 dark:text-white font-mono px-0.5"
-          :class="memoriesToShow === 25 ? 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white' : ''">
+          :class="{ 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white': memoriesToShow === 25 }">
           25
         </button>
         <button @click="memoriesToShow = 50" class="text-[10px] text-gray-700 dark:text-white font-mono px-0.5"
-          :class="memoriesToShow === 50 ? 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white' : ''">
+          :class="{ 'border-b border-gray-700 dark:border-white text-gray-900 dark:text-white': memoriesToShow === 50 }">
           50
         </button>
       </div>
@@ -134,7 +134,7 @@ async function refreshMemories() {
 
 // Initial fetch on mount
 onMounted(() => {
-  refreshMemories()
+  void refreshMemories()
 })
 
 // Get unique users

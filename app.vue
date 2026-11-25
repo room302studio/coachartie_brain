@@ -1,6 +1,9 @@
 <template>
   <div>
-    <NuxtPage />
+    <!-- NuxtLayout was missing, so no page ever got its layout (or the SiteNav in 'main'). -->
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
     
     <!-- Fixed position dark mode toggle -->
     <button 

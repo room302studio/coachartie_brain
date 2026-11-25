@@ -45,7 +45,12 @@ export default defineEventHandler(async (event) => {
       if (match) {
         const [, amount, unit] = match
         const unitMap: Record<string, string> = { h: 'hours', d: 'days', w: 'days', m: 'days' }
-        const multiplier = unit === 'w' ? parseInt(amount) * 7 : unit === 'm' ? parseInt(amount) * 30 : parseInt(amount)
+        let multiplier = parseInt(amount)
+        if (unit === 'w') {
+          multiplier = parseInt(amount) * 7
+        } else if (unit === 'm') {
+          multiplier = parseInt(amount) * 30
+        }
         timeFilter = `AND datetime(created_at) >= datetime('now', '-${multiplier} ${unitMap[unit]}')`
       }
     }

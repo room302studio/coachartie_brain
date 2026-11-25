@@ -15,39 +15,39 @@ export const useDatabase = () => {
 
   return {
     from: (table: string) => ({
-      select: async (columns?: string) => {
+      select: async (_columns?: string) => {
         // Return empty data for now - components will handle gracefully
         return { 
           data: mockData[table] || [], 
           error: null 
         }
       },
-      insert: async (data: any) => {
+      insert: async (_data: any) => {
         return { 
           data: null, 
           error: null 
         }
       },
-      update: async (data: any) => ({
-        eq: (field: string, value: any) => Promise.resolve({ data: null, error: null })
+      update: async (_data: any) => ({
+        eq: (_field: string, _value: any) => Promise.resolve({ data: null, error: null })
       }),
-      upsert: async (data: any, options?: any) => {
+      upsert: async (_data: any, _options?: any) => {
         return { 
           data: null, 
           error: null 
         }
       },
       delete: async () => ({
-        eq: (field: string, value: any) => Promise.resolve({ data: null, error: null })
+        eq: (_field: string, _value: any) => Promise.resolve({ data: null, error: null })
       }),
-      order: (column: string, options?: any) => ({
-        limit: (count: number) => Promise.resolve({ data: mockData[table] || [], error: null })
+      order: (_column: string, _options?: any) => ({
+        limit: (_count: number) => Promise.resolve({ data: mockData[table] || [], error: null })
       })
     }),
     
     // Mock realtime channels
     channel: (name: string) => ({
-      on: (event: string, filter: any, callback: Function) => ({
+      on: (_event: string, _filter: any, _callback: (...args: unknown[]) => void) => ({
         subscribe: () => {
           console.log(`Mock channel subscription: ${name}`)
           return { unsubscribe: () => {} }
@@ -56,7 +56,7 @@ export const useDatabase = () => {
       subscribe: () => ({ unsubscribe: () => {} })
     }),
     
-    removeChannel: (name: string) => Promise.resolve()
+    removeChannel: (_name: string) => Promise.resolve()
   }
 }
 

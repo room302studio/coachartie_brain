@@ -21,8 +21,14 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const searchQuery = query.q as string
     const userId = query.user_id as string || null
-    const limit = query.limit ? parseInt(query.limit as string) : 50
-    const minImportance = query.min_importance ? parseInt(query.min_importance as string) : 0
+    let limit = 50
+    if (query.limit) {
+      limit = parseInt(query.limit as string)
+    }
+    let minImportance = 0
+    if (query.min_importance) {
+      minImportance = parseInt(query.min_importance as string)
+    }
 
     if (!searchQuery) {
       return {

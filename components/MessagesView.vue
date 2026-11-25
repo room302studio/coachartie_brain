@@ -11,7 +11,7 @@
         <span class="text-[9px] text-gray-500 dark:text-gray-500">|</span>
         <button @click="showFilters = !showFilters"
           class="text-[9px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-          [{{ showFilters ? 'HIDE' : 'FILTER' }}]
+          [<span v-if="showFilters">HIDE</span><span v-else>FILTER</span>]
         </button>
         <span class="text-[9px] text-gray-500 dark:text-gray-500">|</span>
         <span class="text-[9px] font-bold text-gray-700 dark:text-gray-300">{{ filteredMessages.length }} MSGS</span>
@@ -20,9 +20,10 @@
         <button v-for="count in [16, 32, 64, 128]" :key="count"
           @click="messagesToShow = count"
           class="text-[9px] px-1 transition-colors"
-          :class="messagesToShow === count
-            ? 'text-black dark:text-white font-bold border-b border-black dark:border-white'
-            : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+          :class="{
+            'text-black dark:text-white font-bold border-b border-black dark:border-white': messagesToShow === count,
+            'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300': messagesToShow !== count,
+          }">
           {{ count }}
         </button>
       </div>
@@ -43,7 +44,7 @@
 
     <!-- Messages list - data dense layout -->
     <div class="max-h-[calc(100vh-280px)] overflow-y-auto overflow-x-hidden">
-      <div v-for="(message, idx) in filteredMessages" :key="message.id"
+      <div v-for="message in filteredMessages" :key="message.id"
         class="message-item border-b border-gray-200 dark:border-gray-900"
         :data-message-id="message.id"
         :data-memory-id="message.memory_id"
@@ -82,8 +83,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { format, formatDistance } from 'date-fns'
-import type { Database, Tables } from '~/database.types'
+import { format } from 'date-fns'
+import type { Tables } from '~/database.types'
 
 type Message = Tables<'messages'>
 
@@ -120,7 +121,12 @@ const userColorCache = new Map<string, string>()
 
 // Get consistent color for a user
 function getUserColor(userId: string, opacity: number = 1): string {
-  if (!userId) return opacity < 1 ? `rgba(128, 128, 128, ${opacity})` : '#808080'
+  if (!userId) {
+    if (opacity < 1) {
+      return `rgba(128, 128, 128, ${opacity})`
+    }
+    return '#808080'
+  }
 
   if (!userColorCache.has(userId)) {
     // Generate a consistent index based on user ID
@@ -206,15 +212,15 @@ const filteredMessages = computed(() => {
 
 // Watch for changes to messagesToShow
 watch(messagesToShow, () => {
-  refreshMessages()
+  void refreshMessages()
 })
 
 // Lifecycle
 onMounted(() => {
-  refreshMessages()
+  void refreshMessages()
 
   // Refresh periodically for real-time feel
-  const interval = setInterval(refreshMessages, 30000) // Every 30 seconds
+  const interval = setInterval(() => { void refreshMessages() }, 30000) // Every 30 seconds
 
   onUnmounted(() => {
     clearInterval(interval)

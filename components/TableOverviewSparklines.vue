@@ -104,7 +104,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import EmbeddableSparkline from '~/components/EmbeddableSparkline.vue'
-const supabase = useDatabase()
+useDatabase()
 
 // Reactive data
 const queueCreatedData = ref([])
@@ -180,8 +180,12 @@ async function fetchData() {
       }
 
       // Process data locally if we fetched it
-      if (queueData.value.length > 0) processQueueData()
-      if (messagesData.value.length > 0) processMessageData()
+      if (queueData.value.length > 0) {
+        processQueueData()
+      }
+      if (messagesData.value.length > 0) {
+        processMessageData()
+      }
     }
   } catch (error) {
     console.error('Error fetching data:', error)
@@ -322,12 +326,12 @@ function generateSampleData() {
 
 // Listen for refresh events
 function setupRefreshListener() {
-  window.addEventListener('refresh-data', fetchData)
+  window.addEventListener('refresh-data', () => { void fetchData() })
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  fetchData()
+  void fetchData()
   setupRefreshListener()
 })
 </script> 

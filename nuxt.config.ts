@@ -45,9 +45,9 @@ export default defineNuxtConfig({
     ]
   ],
   runtimeConfig: {
-    // add the openai api key to the runtime config
+    // Nothing secret goes in `public`: it ships in every page. OPENAI_API_KEY was here and
+    // unused; removed 2026-11-21 before a rebuild could bake the real key into the bundle.
     public: {
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       PRODUCTION: process.env.PRODUCTION
     }
   },

@@ -202,7 +202,7 @@ async function fetchData() {
 
     // Generate hourly data for charts
     generateTimeSeriesData()
-    fetchMemoryDistribution()
+    void fetchMemoryDistribution()
 
     // Update last updated timestamp
     lastUpdated.value = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
@@ -283,7 +283,6 @@ async function fetchMemoryDistribution() {
     }
 
     // Memory age distribution
-    const now = new Date()
     memoryAgeData.value = [
       { name: 'Today', count: Math.floor(Math.random() * 10) + 5 },
       { name: '1-7 days', count: Math.floor(Math.random() * 20) + 10 },
@@ -321,7 +320,9 @@ async function fetchMemoryDistribution() {
 
 // Render memory type chart
 function renderMemoryTypeChart() {
-  if (!memoryTypeChartRef.value || memoryTypesData.value.length === 0) return
+  if (!memoryTypeChartRef.value || memoryTypesData.value.length === 0) {
+    return
+  }
 
   // Clear previous chart
   d3.select(memoryTypeChartRef.value).selectAll('*').remove()
@@ -382,7 +383,9 @@ function renderMemoryTypeChart() {
 
 // Render memory age chart
 function renderMemoryAgeChart() {
-  if (!memoryAgeChartRef.value || memoryAgeData.value.length === 0) return
+  if (!memoryAgeChartRef.value || memoryAgeData.value.length === 0) {
+    return
+  }
 
   // Clear previous chart
   d3.select(memoryAgeChartRef.value).selectAll('*').remove()
@@ -441,7 +444,14 @@ function renderMemoryAgeChart() {
     .attr('dy', '0.35em')
     .attr('text-anchor', 'middle')
     .attr('font-size', '10px')
-    .text(d => d.data.count > 0 ? d.data.name : '')
+    .text(d => ageLabel(d))
+}
+
+function ageLabel(d) {
+  if (d.data.count > 0) {
+    return d.data.name
+  }
+  return ''
 }
 
 // Generate sample data if fetching fails
@@ -488,12 +498,12 @@ function generateSampleData() {
   }
 
   // Set memory distributions
-  fetchMemoryDistribution()
+  void fetchMemoryDistribution()
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  fetchData()
+  void fetchData()
   window.addEventListener('resize', handleResize)
 })
 

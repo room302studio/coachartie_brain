@@ -22,9 +22,15 @@ import { open } from 'sqlite'
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
-    const limit = query.limit ? parseInt(query.limit as string) : 20
+    let limit = 20
+    if (query.limit) {
+      limit = parseInt(query.limit as string)
+    }
     const timeRange = query.timeRange as string || null
-    const minImportance = query.min_importance ? parseInt(query.min_importance as string) : 0
+    let minImportance = 0
+    if (query.min_importance) {
+      minImportance = parseInt(query.min_importance as string)
+    }
 
     const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
     const db = await open({
@@ -39,7 +45,12 @@ export default defineEventHandler(async (event) => {
       if (match) {
         const [, amount, unit] = match
         const unitMap: Record<string, string> = { h: 'hours', d: 'days', w: 'days', m: 'days' }
-        const multiplier = unit === 'w' ? parseInt(amount) * 7 : unit === 'm' ? parseInt(amount) * 30 : parseInt(amount)
+        let multiplier = parseInt(amount)
+        if (unit === 'w') {
+          multiplier = parseInt(amount) * 7
+        } else if (unit === 'm') {
+          multiplier = parseInt(amount) * 30
+        }
         timeFilter = `AND datetime(created_at) >= datetime('now', '-${multiplier} ${unitMap[unit]}')`
       }
     }
@@ -98,7 +109,7 @@ export default defineEventHandler(async (event) => {
         tags.forEach((tag: string) => {
           tagFrequency[tag] = (tagFrequency[tag] || 0) + 1
         })
-      } catch (e) {
+      } catch {
         // Skip invalid JSON
       }
     })

@@ -10,12 +10,17 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "prettier": "prettier {*.*,**/*.*} --single-quote --write",
-    "lint": "echo 'Skipping lint - needs ESLint flat config migration'"
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "@nuxt/devtools": "^1.7.0",
     "@types/node": "^20.17.9",
-    "nuxt": "^3.18.0"
+    "eslint": "^9.39.2",
+    "eslint-plugin-vue": "^10.5.1",
+    "globals": "^16.2.0",
+    "nuxt": "^3.18.0",
+    "typescript-eslint": "^8.48.0"
   },
   "dependencies": {
     "@nuxt/ui": "^2.22.1",

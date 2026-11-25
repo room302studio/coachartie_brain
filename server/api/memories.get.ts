@@ -5,7 +5,10 @@ import { open } from 'sqlite'
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
-    const limit = query.limit ? parseInt(query.limit as string) : 100
+    let limit = 100
+    if (query.limit) {
+      limit = parseInt(query.limit as string)
+    }
     const userId = query.user_id as string || null
     
     const dbPath = process.env.DATABASE_PATH || '/app/data/coachartie.db'
